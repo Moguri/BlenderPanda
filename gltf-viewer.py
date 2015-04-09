@@ -66,6 +66,7 @@ class Viewer(ShowBase):
         self.view_region = None
 
         fbprops = FrameBufferProperties(FrameBufferProperties.get_default())
+        fbprops.set_srgb_color(True)
         fbprops.set_alpha_bits(0)
         wp = WindowProperties.size(sx, sy)
         flags = GraphicsPipe.BF_refuse_window
