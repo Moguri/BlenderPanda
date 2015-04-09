@@ -1,0 +1,3 @@
+[submodule "BlenderRealtimeEngineAddon"]
+	path = BlenderRealtimeEngineAddon
+	url = git@github.com:Moguri/BlenderRealtimeEngineAddon.git
