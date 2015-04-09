@@ -114,7 +114,7 @@ class Viewer(ShowBase):
     def get_render_image(self):
         self.graphicsEngine.render_frame()
         #self.texture.write('tex.png')
-        return self.texture.getRamImage().get_data(), self.texture.get_x_size(), self.texture.get_y_size()
+        return memoryview(self.texture.get_ram_image_as("RGB")), self.texture.get_x_size(), self.texture.get_y_size()
 
 
 if __name__ == '__main__':
