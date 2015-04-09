@@ -66,6 +66,7 @@ class Viewer(ShowBase):
         self.view_region = None
 
         fbprops = FrameBufferProperties(FrameBufferProperties.get_default())
+        fbprops.set_srgb_color(True)
         fbprops.set_alpha_bits(0)
         wp = WindowProperties.size(sx, sy)
         flags = GraphicsPipe.BF_refuse_window
@@ -113,7 +114,7 @@ class Viewer(ShowBase):
     def get_render_image(self):
         self.graphicsEngine.render_frame()
         #self.texture.write('tex.png')
-        return self.texture.getRamImage().get_data(), self.texture.get_x_size(), self.texture.get_y_size()
+        return memoryview(self.texture.get_ram_image_as("RGB")), self.texture.get_x_size(), self.texture.get_y_size()
 
 
 if __name__ == '__main__':
