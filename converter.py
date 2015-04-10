@@ -23,7 +23,15 @@ class Converter():
         self.active_camera = None
 
     def update(self, gltf_data):
-        self.gltf_data.update(gltf_data)
+        if not self.gltf_data:
+            self.gltf_data = gltf_data
+        else:
+            for i in self.gltf_data.keys():
+                if hasattr(self.gltf_data[i], 'update'):
+                    self.gltf_data[i].update(gltf_data[i])
+                else:
+                    self.gltf_data[i] = gltf_data[i]
+        gltf_data = self.gltf_data
         gltf_scene = gltf_data['scenes'][gltf_data['scene']]
         self.background_color = gltf_scene['background_color']
         self.active_camera = gltf_scene['active_camera']
