@@ -15,11 +15,9 @@ if "bpy" in locals():
     import imp
     unregister()
     imp.reload(panda_engine)
-    imp.reload(BlenderRealtimeEngineAddon)
 else:
     import bpy
     from . import panda_engine
-    import BlenderRealtimeEngineAddon
 
 import bl_ui
 
