@@ -33,8 +33,8 @@ class Converter():
                     self.gltf_data[i] = gltf_data[i]
         gltf_data = self.gltf_data
         gltf_scene = gltf_data['scenes'][gltf_data['scene']]
-        self.background_color = gltf_scene['background_color']
-        self.active_camera = gltf_scene['active_camera']
+        self.background_color = gltf_scene['extras']['background_color']
+        self.active_camera = gltf_scene['extras']['active_camera']
 
         # For now blow away the scene and rebuild it
         for child in self.scene_root.get_children():
@@ -52,8 +52,8 @@ class Converter():
                 node = Camera(gltf_node['name'])
                 gltf_camera = gltf_data['cameras'][gltf_node['camera']]
                 self.load_camera(node, gltf_camera, gltf_node['camera'])
-            elif 'light' in gltf_node:
-                gltf_light = gltf_data['lights'][gltf_node['light']]
+            elif 'extras' in gltf_node and 'light' in gltf_node['extras']:
+                gltf_light = gltf_data['extras']['lights'][gltf_node['extras']['light']]
                 if gltf_light['type'] == 'point':
                     node = PointLight(gltf_node['name'])
                     self.load_light(node, gltf_light)
@@ -84,13 +84,12 @@ class Converter():
         gltf_mat = self.gltf_data['materials'][matname]
         state = RenderState.make_empty()
         pmat = Material()
-        technique = gltf_mat['instanceTechnique']
-        pmat.set_shininess(technique['values']['shininess'])
+        pmat.set_shininess(gltf_mat['values']['shininess'])
        
-        diffuse = LColor(*technique['values']['diffuse'])
+        diffuse = LColor(*gltf_mat['values']['diffuse'])
         pmat.set_diffuse(diffuse)
 
-        specular = LColor(*technique['values']['specular'])
+        specular = LColor(*gltf_mat['values']['specular'])
         pmat.set_specular(specular)
 
         #ambient = LColor(*mat['diffuse_color'], w=1)
@@ -109,11 +108,11 @@ class Converter():
         #if mat['use_transparency']:
         #    state = state.set_attrib(TransparencyAttrib.make(TransparencyAttrib.M_alpha))
 
-        for i, tex in enumerate(technique['values']['textures']):
+        for i, tex in enumerate(gltf_mat['values']['textures']):
             tex_attrib = TextureAttrib.make()
             texdata = loader.loadTexture(tex)
             texstage = TextureStage(str(i))
-            texture_layer = technique['values']['uv_layers'][i]
+            texture_layer = gltf_mat['values']['uv_layers'][i]
             print(tex, texdata, texture_layer)
             if texture_layer:
                 texstage.set_texcoord_name(InternalName.get_texcoord_name(texture_layer))
@@ -150,10 +149,10 @@ class Converter():
 
         bv = self.gltf_data['bufferViews'][pacc['bufferView']]
         buff = self.gltf_data['buffers'][bv['buffer']]
-        buff_data = base64.b64decode(buff['uri'].split(',')[1].decode('ascii'))
+        buff_data = base64.b64decode(buff['uri'].split(',')[1])
         start = bv['byteOffset']
         end = bv['byteOffset'] + bv['byteLength']
-        handle.set_data(buff_data[start:end])
+        handle.copy_data_from(buff_data[start:end])
         handle = None
         #idx = start
         #while idx < end:
@@ -174,10 +173,10 @@ class Converter():
 
             bv = self.gltf_data['bufferViews'][iacc['bufferView']]
             buff = self.gltf_data['buffers'][bv['buffer']] 
-            buff_data = base64.b64decode(buff['uri'].split(',')[1].decode('ascii'))
+            buff_data = base64.b64decode(buff['uri'].split(',')[1])
             start = bv['byteOffset']
             end = bv['byteOffset'] + bv['byteLength']
-            handle.set_data(buff_data[start:end])
+            handle.copy_data_from(buff_data[start:end])
             #idx = start
             #indbuf = []
             #while idx < end:
