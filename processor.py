@@ -36,6 +36,8 @@ class PandaProcessor:
         self.view_camera.reparent_to(self.converter.scene_root)
         self.view_camera.node().set_scene(self.converter.scene_root)
 
+        self.converter.scene_root.set_shader_auto()
+
     def _make_offscreen(self, sx, sy):
         fbprops = p3d.FrameBufferProperties(p3d.FrameBufferProperties.get_default())
         fbprops.set_srgb_color(True)
