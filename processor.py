@@ -69,6 +69,10 @@ class PandaProcessor:
 
         #self.converter.scene_root.ls()
 
+    def fix_gl_state(self):
+        '''Issue any GL calls needed to make Panda3D happy'''
+        glEnable(GL_DEPTH_TEST)
+
     def render(self, context):
         window = context.window
         region = context.region
@@ -113,15 +117,8 @@ class PandaProcessor:
             self.view_lens.set_view_mat(p3d.LMatrix4.ident_mat())
 
             #draw
-
-            self.converter.scene_root.set_depth_write(True)
-            self.converter.scene_root.set_depth_test(True)
-            if context.scene.display_settings.display_device == 'sRGB':
-                glEnable(0x8db9)
-                self.engine.render_frame()
-                glDisable(0x8db9)
-            else:
-                self.engine.render_frame()
+            self.fix_gl_state()
+            self.engine.render_frame()
         finally:
             # Restore GL State
             glMatrixMode(GL_PROJECTION)
