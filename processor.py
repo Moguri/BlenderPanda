@@ -33,10 +33,6 @@ class PandaProcessor:
         self.bg = p3d.LVector4(0.0, 0.0, 0.0, 1.0)
 
         self.converter = converter.Converter()
-        self.view_camera.reparent_to(self.converter.scene_root)
-        self.view_camera.node().set_scene(self.converter.scene_root)
-
-        self.converter.scene_root.set_shader_auto()
 
     def _make_offscreen(self, sx, sy):
         fbprops = p3d.FrameBufferProperties(p3d.FrameBufferProperties.get_default())
@@ -68,8 +64,11 @@ class PandaProcessor:
         bg = self.converter.background_color
         self.bg = p3d.LVector4(bg[0], bg[1], bg[2], 1)
         self.view_region.set_clear_color(self.bg)
+        self.view_camera.reparent_to(self.converter.active_scene)
+        self.view_camera.node().set_scene(self.converter.active_scene)
 
-        #self.converter.scene_root.ls()
+        self.converter.active_scene.set_shader_auto()
+        #self.converter.active_scene.ls()
 
     def fix_gl_state(self):
         '''Issue any GL calls needed to make Panda3D happy'''
