@@ -19,11 +19,15 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
     bl_idname = 'PANDA'
     bl_label = 'Panda 3D'
 
-    def __init__(self):
-        self.display = DoubleBuffer(3, self.draw_callback)
-        p = processor.PandaProcessor(self.display)
+    _processor = None
 
-        super().__init__(processor=p)
+    def __init__(self):
+        if PandaEngine._processor is None:
+            self.display = DoubleBuffer(3, self.draw_callback)
+            PandaEngine._processor = processor.PandaProcessor(self.display)
+            PandaEngine._processor.reset()
+
+        super().__init__(processor=PandaEngine._processor)
 
     def view_draw(self, context):
         """ Called when viewport settings change """

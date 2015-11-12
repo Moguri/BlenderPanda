@@ -23,6 +23,9 @@ class PandaProcessor:
         gps = p3d.GraphicsPipeSelection.get_global_ptr()
         self.pipe = gps.make_module_pipe('pandagl')
 
+        self.reset()
+
+    def reset(self):
         self.win = None
         self.view_region = None
         self.view_lens = p3d.MatrixLens()
