@@ -11,6 +11,7 @@ class Converter():
         self.cameras = {}
         self.lights = {}
         self.mat_states = {}
+        self.mat_mesh_map = {}
         self.meshes = {}
         self.nodes = {}
         self.scenes = {}
@@ -93,6 +94,10 @@ class Converter():
 
     def load_material(self, matname, gltf_mat):
         state = self.mat_states.get(matname, RenderState.make_empty())
+
+        if matname not in self.mat_mesh_map:
+            self.mat_mesh_map[matname] = []
+
         pmat = Material()
         pmat.set_shininess(gltf_mat['values']['shininess'])
        
@@ -134,6 +139,15 @@ class Converter():
             tex_attrib = tex_attrib.add_on_stage(texstage, texdata)
             state = state.set_attrib(tex_attrib)
 
+        # Remove stale meshes
+        self.mat_mesh_map[matname] = [
+            pair for pair in self.mat_mesh_map[matname] if pair[0] in self.meshes
+        ]
+
+        # Reload the material
+        for meshname, geom_idx in self.mat_mesh_map[matname]:
+            self.meshes[meshname].set_geom_state(geom_idx, state)
+
         self.mat_states[matname] = state
 
     def load_mesh(self, meshname,  gltf_mesh, gltf_data):
@@ -174,6 +188,7 @@ class Converter():
         #    idx += 24
         #    print(s)
 
+        geom_idx = 0
         for gltf_primitive in gltf_mesh['primitives']:
             # Grab the index data
             prim = GeomTriangles(GeomEnums.UH_stream)
@@ -213,6 +228,9 @@ class Converter():
             geom = Geom(vdata)
             geom.add_primitive(prim)
             node.add_geom(geom, mat)
+
+            self.mat_mesh_map[gltf_primitive['material']].append((meshname, geom_idx))
+            geom_idx += 1
 
         self.meshes[meshname] = node
 
