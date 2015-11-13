@@ -125,10 +125,9 @@ class Converter():
 
         for i, tex in enumerate(gltf_mat['values']['textures']):
             tex_attrib = TextureAttrib.make()
-            texdata = loader.loadTexture(tex)
+            texdata = TexturePool.load_texture(tex, 0, False, LoaderOptions())
             texstage = TextureStage(str(i))
             texture_layer = gltf_mat['values']['uv_layers'][i]
-            print(tex, texdata, texture_layer)
             if texture_layer:
                 texstage.set_texcoord_name(InternalName.get_texcoord_name(texture_layer))
             else:
