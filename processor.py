@@ -62,7 +62,7 @@ class PandaProcessor:
 
     def process_data(self, data):
         '''Accept converted data to be consumed by the processor'''
-        pprint.pprint(data)
+        #pprint.pprint(data)
         self.converter.update(data)
         bg = self.converter.background_color
         self.bg = p3d.LVector4(bg[0], bg[1], bg[2], 1)
