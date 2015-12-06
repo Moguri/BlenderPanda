@@ -21,6 +21,9 @@ else:
 
 import bl_ui
 
+def menu_func_export(self, context):
+    self.layout.operator(panda_engine.ExportBam.bl_idname, text="Panda3D (BAM)")
+
 def register():
     panels = [getattr(bpy.types, t) for t in dir(bpy.types) if 'PT' in t]
     for panel in panels:
@@ -28,6 +31,7 @@ def register():
             panel.COMPAT_ENGINES.add('PANDA')
 
     bpy.utils.register_module(__name__)
+    bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 
 def unregister():
@@ -37,3 +41,4 @@ def unregister():
             panel.COMPAT_ENGINES.remove('PANDA')
 
     bpy.utils.unregister_module(__name__)
+    bpy.types.INFO_MT_file_export.remove(menu_func_export)
