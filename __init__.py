@@ -16,21 +16,20 @@ if "bpy" in locals():
     unregister()
     imp.reload(panda_engine)
     imp.reload(ui)
+    imp.reload(operators)
 else:
     import bpy
     from . import panda_engine
     from . import ui
-
-def menu_func_export(self, context):
-    self.layout.operator(panda_engine.ExportBam.bl_idname, text="Panda3D (BAM)")
+    from . import operators
 
 def register():
     bpy.utils.register_module(__name__)
-    bpy.types.INFO_MT_file_export.append(menu_func_export)
     ui.register()
+    operators.register()
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export)
     ui.unregister()
+    operators.unregister()
