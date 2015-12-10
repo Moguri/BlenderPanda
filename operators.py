@@ -48,7 +48,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportBam.bl_idname, text="Panda3D (BAM)")
+    self.layout.operator(ExportBam.bl_idname, text="Panda3D (.bam)")
 
 
 def register():
