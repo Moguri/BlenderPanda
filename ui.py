@@ -1,6 +1,10 @@
 import bpy
 import os
 
+import pman
+
+from . import operators
+
 class PandaButtonsPanel:
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -9,6 +13,52 @@ class PandaButtonsPanel:
     @classmethod
     def poll(cls, context):
         return context.scene.render.engine in cls.COMPAT_ENGINES
+
+
+class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
+    bl_label = "Project Settings"
+    bl_context = "render"
+
+    def draw_with_config(self, context):
+        layout = self.layout
+        config = pman.get_config()
+
+        layout.label(text="Name: {}".format(config['general']['name']))
+
+    def draw_no_config(self, context):
+        layout = self.layout
+
+        layout.label(text="No config file detected")
+
+    def draw(self, context):
+        try:
+            pman.get_config()
+            self.draw_with_config(context)
+        except pman.NoConfigError:
+            self.draw_no_config(context)
+
+        layout = self.layout
+        layout.operator(operators.CreateProject.bl_idname)
+
+
+class PandaRender_PT_build(PandaButtonsPanel, bpy.types.Panel):
+    bl_label = "Build Settings"
+    bl_context = "render"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator(operators.BuildProject.bl_idname)
+
+
+class PandaRender_PT_run(PandaButtonsPanel, bpy.types.Panel):
+    bl_label = "Run Settings"
+    bl_context = "render"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator(operators.RunProject.bl_idname)
 
 
 class Panda_PT_context_material(PandaButtonsPanel, bpy.types.Panel):

@@ -1,8 +1,12 @@
+import os
+
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
 from brte import engine
 from brte.converters import BTFConverter
+
+import pman
 
 from . import converter
 
@@ -45,6 +49,72 @@ class ExportBam(bpy.types.Operator, ExportHelper):
 
         panda_converter.active_scene.write_bam_file(self.filepath)
         return {'FINISHED'}
+
+
+class CreateProject(bpy.types.Operator):
+    """Setup a new project directory"""
+    bl_idname = 'panda_engine.create_project'
+    bl_label = 'Create New Project'
+
+    directory = bpy.props.StringProperty(
+        name='Project Directory',
+        subtype='DIR_PATH',
+    )
+    game_name = bpy.props.StringProperty(
+        name='Application Name',
+        default='game',
+    )
+
+    switch_dir = bpy.props.BoolProperty(
+        name='Switch to directory',
+        default=True,
+    )
+
+    def execute(self, context):
+        pman.create_project(self.directory, self.game_name)
+
+        if self.switch_dir:
+            os.chdir(self.directory)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.prop(self, 'game_name')
+        layout.prop(self, 'switch_dir')
+
+
+class BuildProject(bpy.types.Operator):
+    """Build the current project"""
+    bl_idname = 'panda_engine.build_project'
+    bl_label = 'Build Project'
+
+    def execute(self, context):
+        try:
+            pman.build()
+            return {'FINISHED'}
+        except pman.PManException as e:
+            self.report({'ERROR'}, e.value)
+            return {'CANCELLED'}
+
+
+class RunProject(bpy.types.Operator):
+    """Run the current project"""
+    bl_idname = 'panda_engine.run_project'
+    bl_label = 'Run Project'
+
+    def execute(self, context):
+        try:
+            pman.run()
+            return {'FINISHED'}
+        except pman.PManException as e:
+            self.report({'ERROR'}, e.value)
+            return {'CANCELLED'}
 
 
 def menu_func_export(self, context):
