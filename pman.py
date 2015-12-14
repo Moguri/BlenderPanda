@@ -33,6 +33,8 @@ def get_config(startdir=None):
 def create_project(projectdir, appname):
     print("Creating new project in", projectdir)
 
+    appname = appname.replace(' ', '')
+
     with open(os.path.join(projectdir, '.pman'), 'w') as f:
         pass
 
@@ -68,6 +70,19 @@ def create_project(projectdir, appname):
         else:
             print("\tCreating directory: {}".format(d))
             os.mkdir(d)
+
+    print("Creating main.py")
+    templatedir = os.path.join(os.path.dirname(__file__), 'templates')
+    with open(os.path.join(templatedir, 'main.py')) as f:
+        main_data = f.read().replace('APP_NAME', appname)
+
+    mainpath = os.path.join(projectdir, 'src', 'main.py')
+    if os.path.exists(mainpath):
+        print("\tmain.py already exists at {}".format(mainpath))
+    else:
+        with open(mainpath, 'w') as f:
+            f.write(main_data)
+        print("\tmain.py created at {}".format(mainpath))
 
 
 def build():
