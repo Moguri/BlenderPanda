@@ -6,8 +6,7 @@ from bpy_extras.io_utils import ExportHelper
 from brte import engine
 from brte.converters import BTFConverter
 
-import pman
-
+from . import pman
 from . import converter
 
 class ExportBam(bpy.types.Operator, ExportHelper):

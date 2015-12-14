@@ -20,7 +20,7 @@ if "bpy" in locals():
     imp.reload(operators)
 else:
     import bpy
-    import pman
+    from . import pman
     from . import panda_engine
     from . import ui
     from . import operators

@@ -1,8 +1,7 @@
 import bpy
 import os
 
-import pman
-
+from . import pman
 from . import operators
 
 class PandaButtonsPanel:
