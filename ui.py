@@ -39,6 +39,7 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
 
         layout = self.layout
         layout.operator(operators.CreateProject.bl_idname)
+        layout.operator(operators.SwitchProject.bl_idname)
 
 
 class PandaRender_PT_build(PandaButtonsPanel, bpy.types.Panel):

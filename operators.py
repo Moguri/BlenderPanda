@@ -89,6 +89,26 @@ class CreateProject(bpy.types.Operator):
         layout.prop(self, 'switch_dir')
 
 
+class SwitchProject(bpy.types.Operator):
+    """Switch to an existing project directory"""
+    bl_idname = 'panda_engine.switch_project'
+    bl_label = 'Switch Project'
+
+    directory = bpy.props.StringProperty(
+        name='Project Directory',
+        subtype='DIR_PATH',
+    )
+
+    def execute(self, context):
+        os.chdir(self.directory)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+
 class BuildProject(bpy.types.Operator):
     """Build the current project"""
     bl_idname = 'panda_engine.build_project'
