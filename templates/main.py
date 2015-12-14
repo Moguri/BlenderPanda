@@ -6,7 +6,8 @@ import panda3d.core as p3d
 
 p3d.load_prc_file_data(
     '',
-    'model-path {}'.format(os.path.join(os.path.dirname(__file__), 'assets'))
+    'model-path {}\n'.format(os.path.join(os.path.dirname(__file__), 'assets')) + \
+    'framebuffer-srgb true\n'
 )
 
 class GameApp(ShowBase):
