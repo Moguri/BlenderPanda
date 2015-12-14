@@ -75,7 +75,7 @@ def create_project(projectdir, appname):
     print("Creating main.py")
     templatedir = os.path.join(os.path.dirname(__file__), 'templates')
     with open(os.path.join(templatedir, 'main.py')) as f:
-        main_data = f.read().replace('APP_NAME', appname)
+        main_data = f.read()
 
     mainpath = os.path.join(projectdir, 'src', 'main.py')
     if os.path.exists(mainpath):
