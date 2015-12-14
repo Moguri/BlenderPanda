@@ -12,6 +12,21 @@ class NoConfigError(PManException):
     pass
 
 
+_config_defaults = {
+    'general': {
+        'name': 'Game',
+    },
+    'build': {
+        'asset_dir': 'assets',
+        'export_dir': 'src/assets',
+    },
+    'run': {
+        'main_file': 'src/main.py',
+        'auto_build': True,
+    }
+}
+
+
 def get_config(startdir=None):
     if startdir is None:
         startdir = os.getcwd()
@@ -23,6 +38,7 @@ def get_config(startdir=None):
         if '.pman' in os.listdir(cdir):
             configpath = os.path.join(cdir, '.pman')
             config = configparser.ConfigParser()
+            config.read_dict(_config_defaults)
             config.read(configpath)
 
             config['internal'] = {}
@@ -44,16 +60,7 @@ def create_project(projectdir, appname):
         pass
 
     config = get_config(projectdir)
-    config['general'] = {}
     config['general']['name'] = appname
-
-    config['build'] = {}
-    config['build']['asset_dir'] = 'assets'
-    config['build']['export_dir'] = 'src/assets'
-
-    config['run'] = {}
-    config['run']['main_file'] = 'src/main.py'
-    config['run']['auto_build'] = 'True'
 
     with open(os.path.join(projectdir, '.pman'), 'w') as f:
         config.write(f)
