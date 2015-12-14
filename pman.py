@@ -49,6 +49,7 @@ def create_project(projectdir, appname):
 
     config['run'] = {}
     config['run']['main_file'] = os.path.join(projectdir, 'src/main.py')
+    config['run']['auto_build'] = 'True'
 
     with open(os.path.join(projectdir, '.pman'), 'w') as f:
         config.write(f)
@@ -109,9 +110,11 @@ def build():
             subprocess.call(args + [frompath, topath])
 
 
-
 def run():
     config = get_config()
+
+    if config['run']['auto_build']:
+        build()
 
     print("Running main file: {}".format(config['run']['main_file']))
     args = ['python', config['run']['main_file']]
