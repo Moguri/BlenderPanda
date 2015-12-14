@@ -18,9 +18,8 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
     bl_label = "Project Settings"
     bl_context = "render"
 
-    def draw_with_config(self, context):
+    def draw_with_config(self, context, config):
         layout = self.layout
-        config = pman.get_config()
 
         layout.label(text="Name: {}".format(config['general']['name']))
 
@@ -31,8 +30,8 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         try:
-            pman.get_config()
-            self.draw_with_config(context)
+            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            self.draw_with_config(context, config)
         except pman.NoConfigError:
             self.draw_no_config(context)
 
