@@ -28,8 +28,12 @@ _config_defaults = {
 
 
 def get_config(startdir=None):
-    if startdir is None:
-        startdir = os.getcwd()
+    try:
+        if startdir is None:
+            startdir = os.getcwd()
+    except FileNotFoundError:
+        # The project folder was deleted on us
+        raise NoConfigError("Could not find config file")
 
     dirs = os.path.abspath(startdir).split(os.sep)
 
