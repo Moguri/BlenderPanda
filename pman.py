@@ -123,7 +123,7 @@ def build():
 def run():
     config = get_config()
 
-    if config['run']['auto_build']:
+    if config.getboolean('run', 'auto_build'):
         build()
 
     mainfile = get_abs_path(config, config['run']['main_file'])
