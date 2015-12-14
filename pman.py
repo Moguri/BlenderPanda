@@ -55,19 +55,28 @@ def get_config(startdir=None):
     raise NoConfigError("Could not find config file")
 
 
+def write_config(config):
+    writecfg = configparser.ConfigParser()
+    writecfg.read_dict(config)
+    writecfg.remove_section('internal')
+
+    with open(os.path.join(config['internal']['projectdir'], '.pman'), 'w') as f:
+        writecfg.write(f)
+
+
 def create_project(projectdir, appname):
     print("Creating new project in", projectdir)
 
     appname = appname.replace(' ', '')
 
-    with open(os.path.join(projectdir, '.pman'), 'w') as f:
+    # Touch config file to make sure it is present
+    with open(os.path.join(projectdir, '.pman'), 'a') as f:
         pass
 
     config = get_config(projectdir)
     config['general']['name'] = appname
 
-    with open(os.path.join(projectdir, '.pman'), 'w') as f:
-        config.write(f)
+    write_config(config)
 
     print("Creating directories...")
 
