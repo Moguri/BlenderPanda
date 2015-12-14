@@ -21,8 +21,12 @@ def get_config(startdir=None):
     while dirs:
         cdir = os.path.join(os.sep, *dirs)
         if '.pman' in os.listdir(cdir):
+            configpath = os.path.join(cdir, '.pman')
             config = configparser.ConfigParser()
-            config.read(os.path.join(cdir, '.pman'))
+            config.read(configpath)
+
+            config['internal'] = {}
+            config['internal']['projectdir'] = os.path.dirname(configpath)
             return config
 
         dirs.pop()
@@ -44,11 +48,11 @@ def create_project(projectdir, appname):
     config['general']['name'] = appname
 
     config['build'] = {}
-    config['build']['asset_dir'] = os.path.join(projectdir, 'assets')
-    config['build']['export_dir'] = os.path.join(projectdir, 'src/assets')
+    config['build']['asset_dir'] = 'assets'
+    config['build']['export_dir'] = 'src/assets'
 
     config['run'] = {}
-    config['run']['main_file'] = os.path.join(projectdir, 'src/main.py')
+    config['run']['main_file'] = 'src/main.py'
     config['run']['auto_build'] = 'True'
 
     with open(os.path.join(projectdir, '.pman'), 'w') as f:
@@ -87,11 +91,21 @@ def create_project(projectdir, appname):
         print("\tmain.py created at {}".format(mainpath))
 
 
+def get_abs_path(config, path):
+    return os.path.join(
+        config['internal']['projectdir'],
+        path
+    )
+
+
 def build():
     config = get_config()
 
-    print("Read assets from: {}".format(config['build']['asset_dir']))
-    print("Export them to: {}".format(config['build']['export_dir']))
+    srcdir = get_abs_path(config, config['build']['asset_dir'])
+    dstdir = get_abs_path(config, config['build']['export_dir'])
+
+    print("Read assets from: {}".format(srcdir))
+    print("Export them to: {}".format(dstdir))
 
     args = [
         'blender',
@@ -99,8 +113,8 @@ def build():
         '-P',
         os.path.join(os.path.dirname(__file__), 'pman_build.py'),
         '--',
-        config['build']['asset_dir'],
-        config['build']['export_dir'],
+        srcdir,
+        dstdir,
     ]
 
     subprocess.call(args)
@@ -112,7 +126,8 @@ def run():
     if config['run']['auto_build']:
         build()
 
-    print("Running main file: {}".format(config['run']['main_file']))
-    args = ['python', config['run']['main_file']]
+    mainfile = get_abs_path(config, config['run']['main_file'])
+    print("Running main file: {}".format(mainfile))
+    args = ['python', mainfile]
     #print("Args: {}".format(args))
     subprocess.Popen(args)
