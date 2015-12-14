@@ -99,15 +99,11 @@ def build():
         '-P',
         os.path.join(os.path.dirname(__file__), 'pman_build.py'),
         '--',
+        config['build']['asset_dir'],
+        config['build']['export_dir'],
     ]
 
-
-    for asset in os.listdir(config['build']['asset_dir']):
-        if asset.endswith('.blend'):
-            frompath = os.path.join(config['build']['asset_dir'], asset)
-            topath = os.path.join(config['build']['export_dir'], asset.replace('.blend', '.bam'))
-            print(args + [frompath, topath])
-            subprocess.call(args + [frompath, topath])
+    subprocess.call(args)
 
 
 def run():
