@@ -1,5 +1,6 @@
 import os
 import configparser
+import subprocess
 
 
 class PManException(Exception):
@@ -95,4 +96,7 @@ def build():
 def run():
     config = get_config()
 
-    print("Run main file: {}".format(config['run']['main_file']))
+    print("Running main file: {}".format(config['run']['main_file']))
+    args = ['python', config['run']['main_file']]
+    #print("Args: {}".format(args))
+    subprocess.Popen(args)
