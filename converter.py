@@ -64,7 +64,7 @@ class Converter():
                     root.set_light(lnp)
 
             for child_nodeid in gltf_node['children']:
-                add_node(panda_node, child_nodeid)
+                add_node(np, child_nodeid)
 
         for scenename, gltf_scene in gltf_data.get('scenes', {}).items():
             scene_root = NodePath(ModelRoot(scenename))
