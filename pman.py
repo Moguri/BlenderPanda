@@ -118,8 +118,9 @@ def get_abs_path(config, path):
     )
 
 
-def build():
-    config = get_config()
+def build(config=None):
+    if config is None:
+        config = get_config()
 
     srcdir = get_abs_path(config, config['build']['asset_dir'])
     dstdir = get_abs_path(config, config['build']['export_dir'])
@@ -140,8 +141,9 @@ def build():
     subprocess.call(args)
 
 
-def run():
-    config = get_config()
+def run(config=None):
+    if config is None:
+        config = get_config()
 
     if config.getboolean('run', 'auto_build'):
         build()
