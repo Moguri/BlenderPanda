@@ -115,7 +115,8 @@ class BuildProject(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            pman.build()
+            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            pman.build(config)
             return {'FINISHED'}
         except pman.PManException as e:
             self.report({'ERROR'}, e.value)
@@ -129,7 +130,8 @@ class RunProject(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            pman.run()
+            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            pman.run(config)
             return {'FINISHED'}
         except pman.PManException as e:
             self.report({'ERROR'}, e.value)
