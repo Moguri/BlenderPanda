@@ -259,6 +259,12 @@ class Converter():
         # Update the light
         if gltf_light['type'] == 'point':
             col = LColor(*gltf_light['point']['color'], w=1)
+            att = LPoint3(
+                gltf_light['point']['constantAttenuation'],
+                gltf_light['point']['linearAttenuation'],
+                gltf_light['point']['quadraticAttenuation']
+            )
             node.set_color(col)
+            node.set_attenuation(att)
 
         self.lights[lightname] = node
