@@ -133,8 +133,6 @@ class Converter():
             else:
                 texstage.set_texcoord_name(InternalName.get_texcoord())
 
-            texstage.set_mode(TextureStage.MReplace)
-
             tex_attrib = tex_attrib.add_on_stage(texstage, texdata)
             state = state.set_attrib(tex_attrib)
 
