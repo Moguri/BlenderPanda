@@ -177,6 +177,8 @@ def get_panels():
     panels = [
         "DATA_PT_camera_display",
         "DATA_PT_camera_safe_areas",
+        "DATA_PT_context_lamp",
+        "DATA_PT_lamp",
     ]
 
     return [getattr(bpy.types, p) for p in panels if hasattr(bpy.types, p)]
