@@ -23,16 +23,15 @@ class PandaProcessor:
         gps = p3d.GraphicsPipeSelection.get_global_ptr()
         self.pipe = gps.make_module_pipe('pandagl')
 
-        self.reset()
-
-    def reset(self):
-        self.win = None
-        self.view_region = None
         self.view_lens = p3d.MatrixLens()
         self.view_camera = p3d.NodePath(p3d.Camera('view'))
         self.view_camera.node().set_lens(self.view_lens)
         self.view_camera.node().set_active(True)
+        self._make_offscreen(1, 1)
 
+        self.reset()
+
+    def reset(self):
         self.bg = p3d.LVector4(0.0, 0.0, 0.0, 1.0)
 
         self.converter = converter.Converter()
@@ -55,7 +54,6 @@ class PandaProcessor:
         dr.set_camera(self.view_camera)
         dr.set_active(True)
         dr.set_clear_color_active(True)
-        dr.set_clear_color(self.bg)
         dr.set_clear_depth(1.0)
         dr.set_clear_depth_active(True)
         self.view_region = dr
@@ -91,9 +89,6 @@ class PandaProcessor:
         dimensions.y *= pixel_scale.x
         dimensions.z *= pixel_scale.y
         dimensions.w *= pixel_scale.y
-        
-        if self.win is None:
-            self._make_offscreen(window.width, window.height)
 
         self.view_region.set_dimensions(dimensions)
 
