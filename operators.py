@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
@@ -43,6 +44,13 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             panda_converter.update(data)
             #panda_converter.active_scene.set_shader_auto()
             panda_converter.active_scene.ls()
+
+            # Copy images
+            for img in data.get('images', {}).values():
+                src = os.path.join(os.path.dirname(bpy.data.filepath), img['uri'])
+                dst = os.path.dirname(self.filepath)
+                print('Copying image from "{}" to "{}"'.format(src, dst))
+                shutil.copy(src, dst)
 
         blender_converter.convert(*self._collect_deltas(), convert_cb)
 
