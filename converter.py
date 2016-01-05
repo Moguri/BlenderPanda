@@ -10,6 +10,7 @@ class Converter():
     def __init__(self):
         self.cameras = {}
         self.lights = {}
+        self.textures = {}
         self.mat_states = {}
         self.mat_mesh_map = {}
         self.meshes = {}
@@ -29,6 +30,9 @@ class Converter():
         if 'extras' in gltf_data:
             for lightname, gltf_light in gltf_data['extras'].get('lights', {}).items():
                 self.load_light(lightname, gltf_light)
+
+        for texname, gltf_tex in gltf_data.get('textures', {}).items():
+            self.load_texture(texname, gltf_tex, gltf_data)
 
         for matname, gltf_mat in gltf_data.get('materials', {}).items():
             self.load_material(matname, gltf_mat)
@@ -92,6 +96,11 @@ class Converter():
             lmat.set_row(i, LVecBase4(*mat[i * 4: i * 4 + 4]))
         return lmat
 
+    def load_texture(self, texname, gltf_tex, gltf_data):
+        source = gltf_data['images'][gltf_tex['source']]
+        texture = TexturePool.load_texture(source['uri'], 0, False, LoaderOptions())
+        self.textures[texname] = texture
+
     def load_material(self, matname, gltf_mat):
         state = self.mat_states.get(matname, RenderState.make_empty())
 
@@ -124,8 +133,12 @@ class Converter():
         #    state = state.set_attrib(TransparencyAttrib.make(TransparencyAttrib.M_alpha))
 
         for i, tex in enumerate(gltf_mat['values']['textures']):
+            texdata = self.textures.get(tex, None)
+            if texdata is None:
+                print("Could not find texture for key: {}".format(tex))
+                continue
+
             tex_attrib = TextureAttrib.make()
-            texdata = TexturePool.load_texture(tex, 0, False, LoaderOptions())
             texstage = TextureStage(str(i))
             texture_layer = gltf_mat['values']['uv_layers'][i]
             if texture_layer:

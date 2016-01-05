@@ -29,10 +29,11 @@ class PandaProcessor:
         self.view_camera.node().set_active(True)
         self._make_offscreen(1, 1)
 
-        self.reset()
-
-    def reset(self):
+    def reset(self, workingdir):
         self.bg = p3d.LVector4(0.0, 0.0, 0.0, 1.0)
+
+        p3d.get_model_path().clear()
+        p3d.get_model_path().prepend_directory(workingdir)
 
         self.converter = converter.Converter()
 

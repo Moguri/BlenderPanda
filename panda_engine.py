@@ -27,7 +27,7 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
         if PandaEngine._processor is None:
             self.display = DoubleBuffer(3, self.draw_callback)
             PandaEngine._processor = processor.PandaProcessor(self.display)
-        PandaEngine._processor.reset()
+        PandaEngine._processor.reset(os.path.dirname(bpy.data.filepath))
 
         super().__init__(processor=PandaEngine._processor)
 
