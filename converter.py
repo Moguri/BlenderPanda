@@ -65,7 +65,10 @@ class Converter():
                     lightid = gltf_node['extras']['light']
                     light = self.lights[lightid]
                     lnp = np.attach_new_node(light)
-                    root.set_light(lnp)
+                    try:
+                        root.set_light(lnp)
+                    except AssertionError as e:
+                        print("Bad light", lightid)
 
             for child_nodeid in gltf_node['children']:
                 add_node(np, gltf_scene, child_nodeid)
@@ -282,7 +285,7 @@ class Converter():
             if gltf_light['type'] == 'point':
                 node = PointLight(lightname)
             else:
-                print("Unsupported light type for light with name {}: {}".format(node_name, gltf_light['type']))
+                print("Unsupported light type for light with name {}: {}".format(lightname, gltf_light['type']))
                 node = PandaNode(lightname)
 
         # Update the light
