@@ -83,10 +83,10 @@ class Converter():
                     visible_recursive(child, visible)
             if 'extras' in gltf_scene and 'hidden_nodes' in gltf_scene['extras']:
                 if nodeid in gltf_scene['extras']['hidden_nodes']:
-                    print('Hiding', np)
+                    #print('Hiding', np)
                     visible_recursive(np, False)
                 else:
-                    print('Showing', np)
+                    #print('Showing', np)
                     visible_recursive(np, True)
 
         for scenename, gltf_scene in gltf_data.get('scenes', {}).items():
