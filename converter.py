@@ -47,10 +47,10 @@ class Converter():
             self.nodes[nodename] = node
 
         # Build scenegraphs
-        def add_node(root, nodeid):
+        def add_node(root, gltf_scene, nodeid):
             gltf_node = gltf_data['nodes'][nodeid]
             panda_node = self.nodes[nodeid]
-            np = root.attach_new_node(panda_node)
+            np = root.attach_new_node(panda_node.make_copy())
 
             if 'meshes' in gltf_node:
                 for meshid in gltf_node['meshes']:
@@ -68,13 +68,29 @@ class Converter():
                     root.set_light(lnp)
 
             for child_nodeid in gltf_node['children']:
-                add_node(np, child_nodeid)
+                add_node(np, gltf_scene, child_nodeid)
+
+            # Handle visibility after children are loaded
+            def visible_recursive(node, visible):
+                if visible:
+                    node.show()
+                else:
+                    node.hide()
+                for child in node.get_children():
+                    visible_recursive(child, visible)
+            if 'extras' in gltf_scene and 'hidden_nodes' in gltf_scene['extras']:
+                if nodeid in gltf_scene['extras']['hidden_nodes']:
+                    print('Hiding', np)
+                    visible_recursive(np, False)
+                else:
+                    print('Showing', np)
+                    visible_recursive(np, True)
 
         for scenename, gltf_scene in gltf_data.get('scenes', {}).items():
             scene_root = NodePath(ModelRoot(scenename))
 
             for nodeid in gltf_scene['nodes']:
-                add_node(scene_root, nodeid)
+                add_node(scene_root, gltf_scene,  nodeid)
 
             self.scenes[scenename] = scene_root
 
