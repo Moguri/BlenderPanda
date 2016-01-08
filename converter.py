@@ -279,24 +279,31 @@ class Converter():
     def load_light(self, lightname, gltf_light):
         node = self.lights.get(lightname, None)
 
+        ltype = gltf_light['type']
         # Construct a new light if needed
         # TODO handle switching light types
         if node is None:
-            if gltf_light['type'] == 'point':
+            if ltype == 'point':
                 node = PointLight(lightname)
+            elif ltype == 'directional':
+                node = DirectionalLight(lightname)
+            elif ltype== 'spot':
+                node = Spotlight(lightname)
             else:
                 print("Unsupported light type for light with name {}: {}".format(lightname, gltf_light['type']))
                 node = PandaNode(lightname)
 
         # Update the light
-        if gltf_light['type'] == 'point':
-            col = LColor(*gltf_light['point']['color'], w=1)
+        lightprops = gltf_light[ltype]
+        if ltype in ('point', 'directional', 'spot'):
+            node.set_color(LColor(*lightprops['color'], w=1))
+
+        if ltype in ('point', 'spot'):
             att = LPoint3(
-                gltf_light['point']['constantAttenuation'],
-                gltf_light['point']['linearAttenuation'],
-                gltf_light['point']['quadraticAttenuation']
+                lightprops['constantAttenuation'],
+                lightprops['linearAttenuation'],
+                lightprops['quadraticAttenuation']
             )
-            node.set_color(col)
             node.set_attenuation(att)
 
         self.lights[lightname] = node
