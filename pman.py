@@ -20,10 +20,10 @@ _config_defaults = {
     },
     'build': {
         'asset_dir': 'assets/',
-        'export_dir': 'src/assets/',
+        'export_dir': 'game/assets/',
     },
     'run': {
-        'main_file': 'src/main.py',
+        'main_file': 'game/main.py',
         'auto_build': True,
     }
 }
@@ -80,8 +80,8 @@ def create_project(projectdir):
 
     dirs = [
         'assets',
-        'src',
-        'src/assets',
+        'game',
+        'game/assets',
     ]
 
     dirs = [os.path.join(projectdir, i) for i in dirs]
