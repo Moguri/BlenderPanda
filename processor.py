@@ -67,7 +67,6 @@ class PandaProcessor:
         self.bg = p3d.LVector4(bg[0], bg[1], bg[2], 1)
         self.view_region.set_clear_color(self.bg)
         self.view_camera.reparent_to(self.converter.active_scene)
-        self.view_camera.node().set_scene(self.converter.active_scene)
 
         self.converter.active_scene.set_shader_auto()
         #self.converter.active_scene.ls()
