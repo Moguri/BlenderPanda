@@ -50,7 +50,11 @@ class Converter():
         def add_node(root, gltf_scene, nodeid):
             gltf_node = gltf_data['nodes'][nodeid]
             panda_node = self.nodes[nodeid]
-            np = root.attach_new_node(panda_node.make_copy())
+
+            if 'extras' in gltf_scene and 'hidden_nodes' in gltf_scene['extras']:
+                if nodeid in gltf_scene['extras']['hidden_nodes']:
+                    panda_node = panda_node.make_copy()
+            np = root.attach_new_node(panda_node)
 
             if 'meshes' in gltf_node:
                 for meshid in gltf_node['meshes']:
