@@ -66,10 +66,6 @@ class CreateProject(bpy.types.Operator):
         name='Project Directory',
         subtype='DIR_PATH',
     )
-    game_name = bpy.props.StringProperty(
-        name='Application Name',
-        default='game',
-    )
 
     switch_dir = bpy.props.BoolProperty(
         name='Switch to directory',
@@ -77,7 +73,7 @@ class CreateProject(bpy.types.Operator):
     )
 
     def execute(self, context):
-        pman.create_project(self.directory, self.game_name)
+        pman.create_project(self.directory)
 
         if self.switch_dir:
             os.chdir(self.directory)
@@ -91,7 +87,6 @@ class CreateProject(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
 
-        layout.prop(self, 'game_name')
         layout.prop(self, 'switch_dir')
 
 

@@ -66,18 +66,14 @@ def write_config(config):
         writecfg.write(f)
 
 
-def create_project(projectdir, appname):
+def create_project(projectdir):
     print("Creating new project in", projectdir)
-
-    appname = appname.replace(' ', '')
 
     # Touch config file to make sure it is present
     with open(os.path.join(projectdir, '.pman'), 'a') as f:
         pass
 
     config = get_config(projectdir)
-    config['general']['name'] = appname
-
     write_config(config)
 
     print("Creating directories...")
@@ -86,8 +82,6 @@ def create_project(projectdir, appname):
         'assets',
         'src',
         'src/assets',
-        'src/config',
-        'src/{}'.format(appname),
     ]
 
     dirs = [os.path.join(projectdir, i) for i in dirs]
