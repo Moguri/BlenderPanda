@@ -22,7 +22,7 @@ class Converter():
         self.background_color = (0, 0, 0)
         self.active_camera = None
 
-    def update(self, gltf_data):
+    def update(self, gltf_data, writing_bam=False):
         # Convert data
         for camname, gltf_cam in gltf_data.get('cameras', {}).items():
             self.load_camera(camname, gltf_cam)
@@ -68,7 +68,9 @@ class Converter():
                 if 'light' in gltf_node['extras']:
                     lightid = gltf_node['extras']['light']
                     light = self.lights[lightid]
-                    lnp = np.attach_new_node(light.make_copy())
+                    if writing_bam:
+                        light = light.make_copy()
+                    lnp = np.attach_new_node(light)
                     try:
                         root.set_light(lnp)
                     except AssertionError as e:

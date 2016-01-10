@@ -47,7 +47,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         p3d.get_model_path().prepend_directory(os.path.dirname(bpy.data.filepath))
 
         def convert_cb(data):
-            panda_converter.update(data)
+            panda_converter.update(data, writing_bam=True)
             #panda_converter.active_scene.ls()
 
             # Copy images
