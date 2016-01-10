@@ -150,7 +150,7 @@ def run(config=None):
         config = get_config()
 
     if config.getboolean('run', 'auto_build'):
-        build()
+        build(config)
 
     mainfile = get_abs_path(config, config['run']['main_file'])
     print("Running main file: {}".format(mainfile))
