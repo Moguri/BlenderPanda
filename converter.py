@@ -251,14 +251,22 @@ class Converter():
             #print(ss.getData())
 
             # Get a material
-            mat = self.mat_states[gltf_primitive['material']]
+            matname = gltf_primitive['material']
+            if not matname:
+                print("Warning: mesh {} has a primitive with no material, using an empty RenderState".format(meshname))
+                mat = RenderState.make_empty()
+            elif matname not in self.mat_states:
+                print("Warning: material with name {} has no associated mat state, using an empty RenderState".format(matname))
+                mat = RenderState.make_empty()
+            else:
+                mat = self.mat_states[gltf_primitive['material']]
+                self.mat_mesh_map[gltf_primitive['material']].append((meshname, geom_idx))
 
             # Now put it together
             geom = Geom(vdata)
             geom.add_primitive(prim)
             node.add_geom(geom, mat)
 
-            self.mat_mesh_map[gltf_primitive['material']].append((meshname, geom_idx))
             geom_idx += 1
 
         self.meshes[meshname] = node
