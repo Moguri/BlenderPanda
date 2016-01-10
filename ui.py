@@ -20,8 +20,10 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
 
     def draw_with_config(self, context, config):
         layout = self.layout
+        project_settings = context.scene.panda_project
 
-        layout.label(text="Name: {}".format(config['general']['name']))
+        layout.prop(project_settings, 'project_name')
+
 
     def draw_no_config(self, context):
         layout = self.layout
@@ -44,9 +46,21 @@ class PandaRender_PT_build(PandaButtonsPanel, bpy.types.Panel):
     bl_label = "Build Settings"
     bl_context = "render"
 
+    @classmethod
+    def poll(cls, context):
+        try:
+            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            have_config = True
+        except pman.NoConfigError:
+            have_config = False
+        return PandaButtonsPanel.poll(context) and have_config
+
     def draw(self, context):
         layout = self.layout
+        project_settings = context.scene.panda_project
 
+        layout.prop(project_settings, 'asset_dir')
+        layout.prop(project_settings, 'export_dir')
         layout.operator(operators.BuildProject.bl_idname)
 
 
@@ -54,9 +68,20 @@ class PandaRender_PT_run(PandaButtonsPanel, bpy.types.Panel):
     bl_label = "Run Settings"
     bl_context = "render"
 
+    @classmethod
+    def poll(cls, context):
+        try:
+            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            have_config = True
+        except pman.NoConfigError:
+            have_config = False
+        return PandaButtonsPanel.poll(context) and have_config
+
     def draw(self, context):
         layout = self.layout
+        project_settings = context.scene.panda_project
 
+        layout.prop(project_settings, 'auto_build')
         layout.operator(operators.RunProject.bl_idname)
 
 
