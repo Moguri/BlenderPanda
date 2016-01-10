@@ -1,6 +1,7 @@
 import os
 import configparser
 import subprocess
+import shutil
 
 
 class PManException(Exception):
@@ -110,6 +111,15 @@ def create_project(projectdir, appname):
         with open(mainpath, 'w') as f:
             f.write(main_data)
         print("\tmain.py created at {}".format(mainpath))
+
+    print("Copying over rendermanager.py")
+    rmansrc = os.path.join(os.path.dirname(__file__), 'rendermanager.py')
+    rmandst = os.path.join(projectdir, 'src', 'rendermanager.py')
+    if os.path.exists(rmandst):
+        print("\trendermanager.py already exists at {}".format(rmandst))
+    else:
+        shutil.copy(rmansrc, rmandst)
+        print("\trendermanager.py created at {}".format(rmandst))
 
 
 def get_abs_path(config, path):
