@@ -64,7 +64,7 @@ class Converter():
                 if 'light' in gltf_node['extras']:
                     lightid = gltf_node['extras']['light']
                     light = self.lights[lightid]
-                    lnp = np.attach_new_node(light)
+                    lnp = np.attach_new_node(light.make_copy())
                     try:
                         root.set_light(lnp)
                     except AssertionError as e:
