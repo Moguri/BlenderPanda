@@ -135,6 +135,12 @@ class Converter():
         specular = LColor(*gltf_mat['values']['specular'])
         pmat.set_specular(specular)
 
+        ambient = LColor(*gltf_mat['values']['ambient'])
+        pmat.set_ambient(ambient)
+
+        emission = LColor(*gltf_mat['values']['emission'])
+        pmat.set_emission(emission)
+
         #ambient = LColor(*mat['diffuse_color'], w=1)
         #ambient *= mat['ambient']
         #ambient.w = mat['alpha']

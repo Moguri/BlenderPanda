@@ -171,6 +171,9 @@ class PandaMaterial_PT_basic(PandaButtonsPanel, bpy.types.Panel):
         col.prop(mat, "specular_intensity", text="Intensity")
         layout.prop(mat, "specular_hardness")
 
+        layout.prop(mat, "emit", text="Emit")
+        layout.prop(mat, "ambient", text="Ambient")
+
 
 class PandaCamera_PT_lens(PandaButtonsPanel, bpy.types.Panel):
     bl_label = "Lens"
