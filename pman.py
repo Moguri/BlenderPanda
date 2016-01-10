@@ -17,8 +17,8 @@ _config_defaults = {
         'name': 'Game',
     },
     'build': {
-        'asset_dir': 'assets',
-        'export_dir': 'src/assets',
+        'asset_dir': 'assets/',
+        'export_dir': 'src/assets/',
     },
     'run': {
         'main_file': 'src/main.py',
@@ -116,6 +116,10 @@ def get_abs_path(config, path):
         config['internal']['projectdir'],
         path
     )
+
+
+def get_rel_path(config, path):
+    return os.path.relpath(path, config['internal']['projectdir'])
 
 
 def build(config=None):
