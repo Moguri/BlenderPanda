@@ -57,7 +57,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
                 print('Copying image from "{}" to "{}"'.format(src, dst))
                 shutil.copy(src, dst)
 
-        blender_converter.convert(*self._collect_deltas(), convert_cb)
+        blender_converter.convert(*self._collect_deltas(), callback=convert_cb)
 
         panda_converter.active_scene.write_bam_file(self.filepath)
 
