@@ -147,7 +147,7 @@ def build(config=None):
         dstdir,
     ]
 
-    subprocess.call(args)
+    subprocess.call(args, env=os.environ.copy())
 
 
 def run(config=None):
