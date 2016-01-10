@@ -37,8 +37,14 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         return (add_delta, update_delta, remove_delta, view_delta)
 
     def execute(self, context):
+        import panda3d.core as p3d
+
         blender_converter = BTFConverter()
         panda_converter = converter.Converter()
+
+        # Setup model path to find textures
+        p3d.get_model_path().clear()
+        p3d.get_model_path().prepend_directory(os.path.dirname(bpy.data.filepath))
 
         def convert_cb(data):
             panda_converter.update(data)
@@ -54,6 +60,9 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         blender_converter.convert(*self._collect_deltas(), convert_cb)
 
         panda_converter.active_scene.write_bam_file(self.filepath)
+
+        # Clean up the model path
+        p3d.get_model_path().clear()
         return {'FINISHED'}
 
 
