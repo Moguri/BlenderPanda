@@ -32,7 +32,7 @@ def get_conf_prop(section, field, conf_type):
 def set_conf_prop(section, field, conf_type=ConfTypes.string):
     def f(self, value):
         config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
-        if conf_type == ConfType.path:
+        if conf_type == ConfTypes.path:
             # Convert from Blender path to pman path
             value = bpy.path.abspath(value)
             config[section][field] = pman.get_rel_path(config, value)
@@ -64,7 +64,7 @@ class PandaProjectSettings(bpy.types.PropertyGroup):
             description="The directory containing assets to be built",
             subtype='DIR_PATH',
             get=get_conf_prop('build', 'asset_dir', ConfTypes.path),
-            set=set_conf_prop('build', 'asset_dir'),
+            set=set_conf_prop('build', 'asset_dir', ConfTypes.path),
         )
 
         cls.export_dir = bpy.props.StringProperty(
@@ -72,7 +72,7 @@ class PandaProjectSettings(bpy.types.PropertyGroup):
             description="The directory to save the built assets",
             subtype='DIR_PATH',
             get=get_conf_prop('build', 'export_dir', ConfTypes.path),
-            set=set_conf_prop('build', 'export_dir'),
+            set=set_conf_prop('build', 'export_dir', ConfTypes.path),
         )
 
         cls.auto_build = bpy.props.BoolProperty(
