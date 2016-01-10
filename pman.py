@@ -15,6 +15,7 @@ class NoConfigError(PManException):
 _config_defaults = {
     'general': {
         'name': 'Game',
+        'render_manager': 'basic',
     },
     'build': {
         'asset_dir': 'assets/',

@@ -42,8 +42,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
 
         def convert_cb(data):
             panda_converter.update(data)
-            #panda_converter.active_scene.set_shader_auto()
-            panda_converter.active_scene.ls()
+            #panda_converter.active_scene.ls()
 
             # Copy images
             for img in data.get('images', {}).values():

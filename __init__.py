@@ -19,6 +19,7 @@ if "bpy" in locals():
     imp.reload(ui)
     imp.reload(operators)
     imp.reload(properties)
+    imp.reload(rendermanager)
 else:
     import bpy
     from . import pman
@@ -26,6 +27,7 @@ else:
     from . import ui
     from . import operators
     from . import properties
+    from . import rendermanager
 
 def register():
     bpy.utils.register_module(__name__)

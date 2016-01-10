@@ -5,6 +5,8 @@ import pprint
 
 from OpenGL.GL import *
 import panda3d.core as p3d
+import pman
+from . import rendermanager
 
 
 if "converter" in locals():
@@ -30,16 +32,33 @@ class PandaProcessor:
         self._make_offscreen(1, 1)
 
         self.converter = None
+        self.render = None
+        self.render_manager = None
 
     def reset(self, workingdir):
         self.bg = p3d.LVector4(0.0, 0.0, 0.0, 1.0)
 
         p3d.get_model_path().clear()
-        p3d.get_model_path().prepend_directory(workingdir)
+        pman_conf = None
+
+        if workingdir:
+            p3d.get_model_path().prepend_directory(workingdir)
+            try:
+                pman_conf = pman.get_config(workingdir)
+            except pman.NoConfigError:
+                pass
 
         if self.converter is not None:
+
             self.converter.active_scene.remove_node()
         self.converter = converter.Converter()
+
+        if self.render is not None:
+            self.render.remove_node
+        self.render = p3d.NodePath('render')
+
+        rman = pman_conf['general']['render_manager'] if pman_conf else 'basic'
+        self.render_manager = rendermanager.create_render_manager(rman, self)
 
     def _make_offscreen(self, sx, sy):
         fbprops = p3d.FrameBufferProperties(p3d.FrameBufferProperties.get_default())
@@ -71,15 +90,15 @@ class PandaProcessor:
         self.bg = p3d.LVector4(bg[0], bg[1], bg[2], 1)
         self.view_region.set_clear_color(self.bg)
         self.view_camera.reparent_to(self.converter.active_scene)
+        self.converter.active_scene.reparent_to(self.render)
 
-        self.converter.active_scene.set_shader_auto()
         #self.converter.active_scene.ls()
 
     def fix_gl_state(self):
         '''Issue any GL calls needed to make Panda3D happy'''
         glEnable(GL_DEPTH_TEST)
 
-    def render(self, context):
+    def render_frame(self, context):
         window = context.window
         region = context.region
         view = context.region_data

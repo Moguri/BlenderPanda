@@ -33,7 +33,7 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
 
     def view_draw(self, context):
         """ Called when viewport settings change """
-        self.processor.render(context)
+        self.processor.render_frame(context)
 
     def main_update(self, dt):
         super().main_update(dt)
