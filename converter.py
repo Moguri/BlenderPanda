@@ -46,6 +46,10 @@ class Converter():
             node.set_transform(TransformState.make_mat(matrix))
             self.nodes[nodename] = node
 
+        # If we support writing bam 6.40, we can safely write out
+        # instanced lights.  If not, we have to copy it.
+        copy_lights = writing_bam and not hasattr(BamWriter, 'root_node')
+
         # Build scenegraphs
         def add_node(root, gltf_scene, nodeid):
             gltf_node = gltf_data['nodes'][nodeid]
@@ -68,7 +72,7 @@ class Converter():
                 if 'light' in gltf_node['extras']:
                     lightid = gltf_node['extras']['light']
                     light = self.lights[lightid]
-                    if writing_bam:
+                    if copy_lights:
                         light = light.make_copy()
                     lnp = np.attach_new_node(light)
                     try:
