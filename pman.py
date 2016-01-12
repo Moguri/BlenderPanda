@@ -98,7 +98,7 @@ def create_project(projectdir):
     with open(os.path.join(templatedir, 'main.py')) as f:
         main_data = f.read()
 
-    mainpath = os.path.join(projectdir, 'src', 'main.py')
+    mainpath = os.path.join(projectdir, 'game', 'main.py')
     if os.path.exists(mainpath):
         print("\tmain.py already exists at {}".format(mainpath))
     else:
@@ -108,7 +108,7 @@ def create_project(projectdir):
 
     print("Copying over rendermanager.py")
     rmansrc = os.path.join(os.path.dirname(__file__), 'rendermanager.py')
-    rmandst = os.path.join(projectdir, 'src', 'rendermanager.py')
+    rmandst = os.path.join(projectdir, 'game', 'rendermanager.py')
     if os.path.exists(rmandst):
         print("\trendermanager.py already exists at {}".format(rmandst))
     else:
