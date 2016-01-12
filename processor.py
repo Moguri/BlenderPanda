@@ -57,8 +57,7 @@ class PandaProcessor:
             self.render.remove_node
         self.render = p3d.NodePath('render')
 
-        rman = pman_conf['general']['render_manager'] if pman_conf else 'basic'
-        self.render_manager = rendermanager.create_render_manager(rman, self)
+        self.render_manager = rendermanager.create_render_manager(self, pman_conf)
 
     def _make_offscreen(self, sx, sy):
         fbprops = p3d.FrameBufferProperties(p3d.FrameBufferProperties.get_default())

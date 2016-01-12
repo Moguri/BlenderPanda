@@ -59,6 +59,14 @@ class PandaProjectSettings(bpy.types.PropertyGroup):
             set=set_conf_prop('general', 'name'),
         )
 
+        cls.render_plugin = bpy.props.StringProperty(
+            name="Render Plugin",
+            description="Path to a Python file containing a plugin for rendering",
+            subtype='FILE_PATH',
+            get=get_conf_prop('general', 'render_plugin', ConfTypes.path),
+            set=set_conf_prop('general', 'render_plugin', ConfTypes.path),
+        )
+
         cls.asset_dir = bpy.props.StringProperty(
             name="Asset Directory",
             description="The directory containing assets to be built",

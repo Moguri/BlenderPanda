@@ -23,6 +23,7 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
         project_settings = context.scene.panda_project
 
         layout.prop(project_settings, 'project_name')
+        layout.prop(project_settings, 'render_plugin')
 
 
     def draw_no_config(self, context):
