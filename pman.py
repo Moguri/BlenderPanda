@@ -84,6 +84,11 @@ def create_project(projectdir):
         'game/assets',
     ]
 
+    copy_files = [
+        'rendermanager.py',
+        'pman.py',
+    ]
+
     dirs = [os.path.join(projectdir, i) for i in dirs]
 
     for d in dirs:
@@ -106,14 +111,15 @@ def create_project(projectdir):
             f.write(main_data)
         print("\tmain.py created at {}".format(mainpath))
 
-    print("Copying over rendermanager.py")
-    rmansrc = os.path.join(os.path.dirname(__file__), 'rendermanager.py')
-    rmandst = os.path.join(projectdir, 'game', 'rendermanager.py')
-    if os.path.exists(rmandst):
-        print("\trendermanager.py already exists at {}".format(rmandst))
-    else:
-        shutil.copy(rmansrc, rmandst)
-        print("\trendermanager.py created at {}".format(rmandst))
+    for cf in copy_files:
+        print("Copying over {}".format(cf))
+        cfsrc = os.path.join(os.path.dirname(__file__), cf)
+        cfdst = os.path.join(projectdir, 'game', cf)
+        if os.path.exists(cfdst):
+            print("\t{} already exists at {}".format(cf, cfdst))
+        else:
+            shutil.copy(cfsrc, cfdst)
+            print("\t{} created at {}".format(cf, cfdst))
 
 
 def get_abs_path(config, path):
