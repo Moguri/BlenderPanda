@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/blenderpanda/badge/?version=latest)](http://blenderpanda.readthedocs.org/en/latest/?badge=latest)
+
 # BlenderPanda
 Blender addon for integrating [Panda3D](http://www.panda3d.org/)
 
