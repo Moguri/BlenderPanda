@@ -13,5 +13,5 @@ In order to more easily track updates to this addon, try cloning the repo into t
 For example, on Linux:
 
 ```
-git clone --recursive git@github.com:Moguri/BlenderPanda.git ~/.config/blender/2.76/scripts/addons/
+git clone --recursive https://github.com/Moguri/BlenderPanda.git ~/.config/blender/2.76/scripts/addons/
 ```
