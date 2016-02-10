@@ -40,8 +40,8 @@ def get_config(startdir=None):
     dirs = os.path.abspath(startdir).split(os.sep)
 
     while dirs:
-        cdir = os.path.join(os.sep, *dirs)
-        if '.pman' in os.listdir(cdir):
+        cdir = os.sep.join(dirs)
+        if cdir.strip() and '.pman' in os.listdir(cdir):
             configpath = os.path.join(cdir, '.pman')
             config = configparser.ConfigParser()
             config.read_dict(_config_defaults)

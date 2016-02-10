@@ -5,7 +5,7 @@ import pprint
 
 from OpenGL.GL import *
 import panda3d.core as p3d
-import pman
+from . import pman
 from . import rendermanager
 
 

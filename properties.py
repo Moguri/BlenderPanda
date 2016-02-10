@@ -2,7 +2,7 @@ import os
 from enum import Enum
 
 import bpy
-import pman
+from . import pman
 
 class ConfTypes(Enum):
     string = 1

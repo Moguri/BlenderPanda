@@ -1,9 +1,6 @@
 import os
 import sys
 
-path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(path)
-sys.path.append(os.path.join(path, 'brte'))
 
 if "bpy" in locals():
     import imp
@@ -11,8 +8,8 @@ if "bpy" in locals():
     imp.reload(processor)
 else:
     import bpy
-    from brte import engine
-    from brte.processors import DoubleBuffer
+    from .brte.brte import engine
+    from .brte.brte.processors import DoubleBuffer
     from . import processor
 
 

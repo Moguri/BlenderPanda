@@ -4,8 +4,8 @@ import shutil
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
-from brte import engine
-from brte.converters import BTFConverter
+from .brte.brte import engine
+from .brte.brte.converters import BTFConverter
 
 from . import pman
 from . import converter
