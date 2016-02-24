@@ -3,8 +3,7 @@ import sys
 
 from direct.showbase.ShowBase import ShowBase
 import panda3d.core as p3d
-
-import rendermanager
+from blenderpanda import rendermanager
 
 p3d.load_prc_file_data(
     '',
@@ -17,7 +16,7 @@ class GameApp(ShowBase):
         ShowBase.__init__(self)
         self.accept('escape', sys.exit)
 
-        self.rendermanager = rendermanager.create_render_manager('basic', self)
+        self.rendermanager = rendermanager.create_render_manager(self)
 
 
 app = GameApp()
