@@ -98,6 +98,21 @@ class CreateProject(bpy.types.Operator):
 
         layout.prop(self, 'switch_dir')
 
+class UpdateProject(bpy.types.Operator):
+    """Re-copies any missing project files"""
+    bl_idname = 'panda_engine.update_project'
+    bl_label = 'Update Project Files'
+
+    def execute(self, context):
+        try:
+            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            pman.create_project(pman.get_abs_path(config, ''))
+            return {'FINISHED'}
+        except pman.PManException as e:
+            self.report({'ERROR'}, e.value)
+            return {'CANCELLED'}
+
+
 
 class SwitchProject(bpy.types.Operator):
     """Switch to an existing project directory"""

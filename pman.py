@@ -67,11 +67,15 @@ def write_config(config):
 
 
 def create_project(projectdir):
-    print("Creating new project in", projectdir)
+    confpath = os.path.join(projectdir, '.pman')
+    if os.path.exists(confpath):
+        print("Updating project in {}".format(projectdir))
+    else:
+        print("Creating new project in {}".format(projectdir))
 
-    # Touch config file to make sure it is present
-    with open(os.path.join(projectdir, '.pman'), 'a') as f:
-        pass
+        # Touch config file to make sure it is present
+        with open(confpath, 'a') as f:
+            pass
 
     config = get_config(projectdir)
     write_config(config)
