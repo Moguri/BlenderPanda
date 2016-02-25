@@ -76,6 +76,8 @@ def create_project(projectdir):
     config = get_config(projectdir)
     write_config(config)
 
+    templatedir = os.path.join(os.path.dirname(__file__), 'templates')
+
     print("Creating directories...")
 
     dirs = [
@@ -86,6 +88,8 @@ def create_project(projectdir):
     ]
 
     copy_files = [
+        os.path.join(templatedir, '__init__.py'),
+        os.path.join(templatedir, 'bpbase.py'),
         'rendermanager.py',
         'pman.py',
     ]
@@ -100,7 +104,6 @@ def create_project(projectdir):
             os.mkdir(d)
 
     print("Creating main.py")
-    templatedir = os.path.join(os.path.dirname(__file__), 'templates')
     with open(os.path.join(templatedir, 'main.py')) as f:
         main_data = f.read()
 
@@ -112,24 +115,17 @@ def create_project(projectdir):
             f.write(main_data)
         print("\tmain.py created at {}".format(mainpath))
 
-    print("Creating blenderpanda/__init__.py")
-    initpath = os.path.join(projectdir, 'game', 'blenderpanda', '__init__')
-    if os.path.exists(initpath):
-        print("\t__init__.py already exists at {}".format(initpath))
-    else:
-        with open(initpath, 'w') as f:
-            f.write('')
-        print("\t__init__.py created at {}".format(initpath))
-
+    print("Creating blenderpanda module")
     for cf in copy_files:
-        print("Copying over {}".format(cf))
+        bname = os.path.basename(cf)
+        print("\tCopying over {}".format(bname))
         cfsrc = os.path.join(os.path.dirname(__file__), cf)
-        cfdst = os.path.join(projectdir, 'game', 'blenderpanda', cf)
+        cfdst = os.path.join(projectdir, 'game', 'blenderpanda', bname)
         if os.path.exists(cfdst):
-            print("\t{} already exists at {}".format(cf, cfdst))
+            print("\t\t{} already exists at {}".format(bname, cfdst))
         else:
             shutil.copy(cfsrc, cfdst)
-            print("\t{} created at {}".format(cf, cfdst))
+            print("\t\t{} created at {}".format(bname, cfdst))
 
 
 def get_abs_path(config, path):
