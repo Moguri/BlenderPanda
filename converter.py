@@ -16,6 +16,7 @@ class Converter():
         self.meshes = {}
         self.nodes = {}
         self.scenes = {}
+        self.characters = {}
 
         # Scene props
         self.active_scene = NodePath(ModelRoot('default'))
@@ -67,6 +68,10 @@ class Converter():
                 for meshid in gltf_node['meshes']:
                     mesh = self.meshes[meshid]
                     np.attach_new_node(mesh)
+            if 'skeletons' in gltf_node:
+                for skelid in gltf_node['skeletons']:
+                    skel = self.characters[skelid]
+                    np.attach_new_node(skel)
             if 'camera' in gltf_node:
                 camid = gltf_node['camera']
                 cam = self.cameras[camid]
@@ -226,7 +231,7 @@ class Converter():
                 create_joint(joint, bone_node)
 
         create_joint(skeleton, root)
-
+        self.characters[armature['name']] = character
         return character, jvtmap
 
 
