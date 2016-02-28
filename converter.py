@@ -53,6 +53,9 @@ class Converter():
         # Build scenegraphs
         def add_node(root, gltf_scene, nodeid):
             gltf_node = gltf_data['nodes'][nodeid]
+            if 'jointName' in gltf_node:
+                # don't handle joints here
+                return
             panda_node = self.nodes[nodeid]
 
             if 'extras' in gltf_scene and 'hidden_nodes' in gltf_scene['extras']:
@@ -195,26 +198,79 @@ class Converter():
 
         self.mat_states[matname] = state
 
+    def create_character(self, gltf_skin, gltf_mesh, gltf_data):
+        #print("Creating character for", gltf_mesh['name'])
+        # Find the root bone node
+        bone = gltf_data['nodes'][gltf_skin['jointNames'][0]]
+        root = None
+        armature = None
+        while root is None:
+            next_bone = [node for node in gltf_data['nodes'].values() if bone['name'] in node['children']][0]
+            if next_bone['name'] not in gltf_skin['jointNames']:
+                root = bone
+                armature = next_bone
+            bone = next_bone
+
+        character = Character(gltf_mesh['name'])
+        bundle = character.get_bundle(0)
+        skeleton = PartGroup(bundle, "<skeleton>")
+        jvtmap = {}
+
+        def create_joint(parent, node):
+            #print("Creating joint for:", node['name'])
+            joint = CharacterJoint(character, bundle, parent, node['name'], self.load_matrix(node['matrix']))
+            jvtmap[gltf_skin['jointNames'].index("{}_{}".format(armature['name'],node['name']))] = JointVertexTransform(joint)
+
+            for child in node['children']:
+                bone_node = [node for node in gltf_data['nodes'].values() if 'jointName' in node and child == node['jointName']][0]
+                create_joint(joint, bone_node)
+
+        create_joint(skeleton, root)
+
+        return character, jvtmap
+
+
     def load_mesh(self, meshname,  gltf_mesh, gltf_data):
         node = self.meshes.get(meshname, GeomNode(meshname))
 
         # Clear any existing mesh data
         node.remove_all_geoms()
 
+        # Check for skinning data
+        mesh_attribs = gltf_mesh['primitives'][0]['attributes']
+        is_skinned = 'WEIGHT' in mesh_attribs
+
         # Describe the vertex data
         va = GeomVertexArrayFormat()
         va.add_column(InternalName.get_vertex(), 3, GeomEnums.NTFloat32, GeomEnums.CPoint)
         va.add_column(InternalName.get_normal(), 3, GeomEnums.NTFloat32, GeomEnums.CPoint)
 
+        if is_skinned:
+            gltf_skin = [skin for skin in gltf_data['skins'].values() if skin['name'] == gltf_mesh['name']][0]
+            character, jvtmap = self.create_character(gltf_skin, gltf_mesh, gltf_data)
+            tb_va = GeomVertexArrayFormat()
+            tb_va.add_column(InternalName.get_transform_blend(), 1, GeomEnums.NTUint16, GeomEnums.CIndex)
+            tbtable = TransformBlendTable()
+
         uv_layers = [i.replace('TEXCOORD_', '') for i in gltf_mesh['primitives'][0]['attributes'] if i.startswith('TEXCOORD_')]
         for uv_layer in uv_layers:
             va.add_column(InternalName.get_texcoord_name(uv_layer), 2, GeomEnums.NTFloat32, GeomEnums.CTexcoord)
 
-        reg_format = GeomVertexFormat.register_format(GeomVertexFormat(va))
+        #reg_format = GeomVertexFormat.register_format(GeomVertexFormat(va))
+        format = GeomVertexFormat()
+        format.add_array(va)
+        if is_skinned:
+            format.add_array(tb_va)
+            aspec = GeomVertexAnimationSpec()
+            aspec.set_panda()
+            format.set_animation(aspec)
+        reg_format = GeomVertexFormat.register_format(format)
         vdata = GeomVertexData(gltf_mesh['name'], reg_format, GeomEnums.UH_stream)
+        if is_skinned:
+            vdata.set_transform_blend_table(tbtable)
 
         # Write the vertex data
-        pacc_name = gltf_mesh['primitives'][0]['attributes']['POSITION']
+        pacc_name = mesh_attribs['POSITION']
         pacc = gltf_data['accessors'][pacc_name]
 
         handle = vdata.modify_array(0).modify_handle()
@@ -232,6 +288,26 @@ class Converter():
         #    s = struct.unpack_from('<ffffff', buff_data, idx)
         #    idx += 24
         #    print(s)
+
+        # Write the transform blend table
+        if is_skinned:
+            tdata = GeomVertexWriter(vdata, InternalName.get_transform_blend())
+
+            sacc = gltf_data['accessors'][mesh_attribs['WEIGHT']]
+            sbv = gltf_data['bufferViews'][sacc['bufferView']]
+            sbuff = gltf_data['buffers'][sbv['buffer']]
+            sbuff_data = base64.b64decode(sbuff['uri'].split(',')[1])
+
+            for i in range(0, sbv['byteLength'], 32):
+                joints = struct.unpack_from('<ffff', sbuff_data, i)
+                weights = struct.unpack_from('<ffff', sbuff_data, i+16)
+                #print(i, joints, weights)
+                tblend = TransformBlend()
+                for j in range(4):
+                    tblend.add_transform(jvtmap[joints[j]], weights[j])
+                tdata.add_data1i(tbtable.add_blend(tblend))
+
+            tbtable.set_rows(SparseArray.lower_on(vdata.get_num_rows()))
 
         geom_idx = 0
         for gltf_primitive in gltf_mesh['primitives']:

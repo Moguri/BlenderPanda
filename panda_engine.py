@@ -26,6 +26,7 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
             PandaEngine._processor = processor.PandaProcessor(self.display)
         PandaEngine._processor.reset(os.path.dirname(bpy.data.filepath))
 
+        self.processor = PandaEngine._processor
         super().__init__(processor=PandaEngine._processor)
 
     def view_draw(self, context):
