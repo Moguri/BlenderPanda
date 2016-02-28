@@ -204,18 +204,10 @@ class Converter():
 
         self.mat_states[matname] = state
 
-    def create_character(self, gltf_skin, gltf_mesh, gltf_data):
+    def create_character(self, gltf_node, gltf_skin, gltf_mesh, gltf_data):
         #print("Creating character for", gltf_mesh['name'])
-        # Find the root bone node
-        bone = gltf_data['nodes'][gltf_skin['jointNames'][0]]
-        root = None
-        armature = None
-        while root is None:
-            next_bone = [node for node in gltf_data['nodes'].values() if bone['name'] in node['children']][0]
-            if next_bone['name'] not in gltf_skin['jointNames']:
-                root = bone
-                armature = next_bone
-            bone = next_bone
+        skel_name = gltf_node['skeletons'][0]
+        root = gltf_data['nodes'][skel_name]
 
         character = Character(gltf_mesh['name'])
         bundle = character.get_bundle(0)
@@ -225,14 +217,21 @@ class Converter():
         def create_joint(parent, node):
             #print("Creating joint for:", node['name'])
             joint = CharacterJoint(character, bundle, parent, node['name'], self.load_matrix(node['matrix']))
-            jvtmap[gltf_skin['jointNames'].index("{}_{}".format(armature['name'],node['name']))] = JointVertexTransform(joint)
+
+            # Non-deforming bones are not in the skin's jointNames, don't add them to the jvtmap
+            if node['jointName'] in gltf_skin['jointNames']:
+                joint_index = gltf_skin['jointNames'].index(node['jointName'])
+                jvtmap[gltf_skin['jointNames'].index(node['jointName'])] = JointVertexTransform(joint)
+
 
             for child in node['children']:
-                bone_node = [node for node in gltf_data['nodes'].values() if 'jointName' in node and child == node['jointName']][0]
+                #print("Create joint for child", child)
+                bone_node = gltf_data['nodes'][child]
                 create_joint(joint, bone_node)
 
         create_joint(skeleton, root)
-        self.characters[armature['name']] = character
+        #print("Adding character to map under", skel_name)
+        self.characters[skel_name] = character
         return character, jvtmap
 
 
@@ -252,8 +251,11 @@ class Converter():
         va.add_column(InternalName.get_normal(), 3, GeomEnums.NTFloat32, GeomEnums.CPoint)
 
         if is_skinned:
-            gltf_skin = [skin for skin in gltf_data['skins'].values() if skin['name'] == gltf_mesh['name']][0]
-            character, jvtmap = self.create_character(gltf_skin, gltf_mesh, gltf_data)
+            # Find all nodes that use this mesh and try to find a skin
+            gltf_nodes = [node for node in gltf_data['nodes'].values() if 'meshes' in node and meshname in node['meshes']]
+            gltf_node = [node for node in gltf_nodes if 'skin' in node][0]
+            gltf_skin = gltf_data['skins'][gltf_node['skin']]
+            character, jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
             tb_va = GeomVertexArrayFormat()
             tb_va.add_column(InternalName.get_transform_blend(), 1, GeomEnums.NTUint16, GeomEnums.CIndex)
             tbtable = TransformBlendTable()
@@ -310,7 +312,14 @@ class Converter():
                 #print(i, joints, weights)
                 tblend = TransformBlend()
                 for j in range(4):
-                    tblend.add_transform(jvtmap[joints[j]], weights[j])
+                    joint = int(joints[j])
+                    weight = weights[j]
+                    try:
+                        jvt = jvtmap[joint]
+                    except KeyError:
+                        print("Could not find joint in jvtmap:\n\tjoint={}\n\tjvtmap={}".format(joint, jvtmap))
+                        continue
+                    tblend.add_transform(jvt, weight)
                 tdata.add_data1i(tbtable.add_blend(tblend))
 
             tbtable.set_rows(SparseArray.lower_on(vdata.get_num_rows()))
