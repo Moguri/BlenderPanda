@@ -46,18 +46,17 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         p3d.get_model_path().clear()
         p3d.get_model_path().prepend_directory(os.path.dirname(bpy.data.filepath))
 
-        def convert_cb(data):
-            panda_converter.update(data, writing_bam=True)
-            #panda_converter.active_scene.ls()
+        data = blender_converter.convert(*self._collect_deltas())
 
-            # Copy images
-            for img in data.get('images', {}).values():
-                src = os.path.join(os.path.dirname(bpy.data.filepath), img['uri'])
-                dst = os.path.dirname(self.filepath)
-                print('Copying image from "{}" to "{}"'.format(src, dst))
-                shutil.copy(src, dst)
+        panda_converter.update(data, writing_bam=True)
+        #panda_converter.active_scene.ls()
 
-        blender_converter.convert(*self._collect_deltas(), callback=convert_cb)
+        # Copy images
+        for img in data.get('images', {}).values():
+            src = os.path.join(os.path.dirname(bpy.data.filepath), img['uri'])
+            dst = os.path.dirname(self.filepath)
+            print('Copying image from "{}" to "{}"'.format(src, dst))
+            shutil.copy(src, dst)
 
         panda_converter.active_scene.write_bam_file(self.filepath)
 
