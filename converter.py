@@ -65,13 +65,14 @@ class Converter():
             np = root.attach_new_node(panda_node)
 
             if 'meshes' in gltf_node:
+                np_tmp = np
+                if 'skeletons' in gltf_node:
+                    skel = self.characters[gltf_node['skeletons'][0]]
+                    np_tmp = np.attach_new_node(skel)
+
                 for meshid in gltf_node['meshes']:
                     mesh = self.meshes[meshid]
-                    np.attach_new_node(mesh)
-            if 'skeletons' in gltf_node:
-                for skelid in gltf_node['skeletons']:
-                    skel = self.characters[skelid]
-                    np.attach_new_node(skel)
+                    np_tmp.attach_new_node(mesh)
             if 'camera' in gltf_node:
                 camid = gltf_node['camera']
                 cam = self.cameras[camid]
