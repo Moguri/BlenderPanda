@@ -8,10 +8,4 @@ Blender addon for integrating [Panda3D](http://www.panda3d.org/)
 * Python 3 build of Panda3D
 
 # Installation
-Install this addon as you would other addons.
-In order to more easily track updates to this addon, try cloning the repo into the addons folder in your Blender configuration folder.
-For example, on Linux:
-
-```
-git clone --recursive https://github.com/Moguri/BlenderPanda.git ~/.config/blender/2.76/scripts/addons/
-```
+Getting BlenderPanda installed and running can be a little tricky, so please carefully read the [installation docs](https://blenderpanda.readthedocs.org/en/latest/install.html).
