@@ -8,7 +8,6 @@ from .brte.brte import engine
 from .brte.brte.converters import BTFConverter
 
 from . import pman
-from . import converter
 
 class ExportBam(bpy.types.Operator, ExportHelper):
     """Export to Panda3D's BAM file format"""
@@ -38,6 +37,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
 
     def execute(self, context):
         import panda3d.core as p3d
+        from . import converter
 
         blender_converter = BTFConverter()
         panda_converter = converter.Converter()
