@@ -17,9 +17,7 @@ else:
 
 
 class PandaProcessor:
-    def __init__(self, buffer):
-        self.buffer = buffer
-
+    def __init__(self):
         self.engine = p3d.GraphicsEngine()
 
         gps = p3d.GraphicsPipeSelection.get_global_ptr()

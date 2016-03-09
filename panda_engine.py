@@ -1,16 +1,20 @@
 import os
 
+USE_EXTERNAL = False
+
 
 if "bpy" in locals():
     import imp
     imp.reload(engine)
     imp.reload(ExternalProcessor)
-    #imp.reload(processor)
+    if not USE_EXTERNAL:
+        imp.reload(processor)
 else:
     import bpy
     from .brte.brte import engine
     from .brte.brte.processors import ExternalProcessor
-    #from . import processor
+    if not USE_EXTERNAL:
+        from . import processor
 
 
 
@@ -21,25 +25,28 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
     _processor = None
 
     def __init__(self):
-        pycmd = 'python3'
-        path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
-        args = [pycmd, path]
+        if USE_EXTERNAL:
+            pycmd = 'python3'
+            path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
+            args = [pycmd, path]
 
-        super().__init__(processor=ExternalProcessor(args))
+            super().__init__(processor=ExternalProcessor(args))
+        else:
+            if PandaEngine._processor is None:
+                PandaEngine._processor = processor.PandaProcessor()
+            PandaEngine._processor.reset(os.path.dirname(bpy.data.filepath))
 
-    #def __init__(self):
-    #    if PandaEngine._processor is None:
-    #        self.display = DoubleBuffer(3, self.draw_callback)
-    #        PandaEngine._processor = processor.PandaProcessor(self.display)
-    #    PandaEngine._processor.reset(os.path.dirname(bpy.data.filepath))
+            self.processor = PandaEngine._processor
+            super().__init__(processor=PandaEngine._processor)
 
-    #    self.processor = PandaEngine._processor
-    #    super().__init__(processor=PandaEngine._processor)
+    def view_draw(self, context):
+        """ Called when viewport settings change """
+        if not USE_EXTERNAL:
+            self.processor.render_frame(context)
+        else:
+            super().view_draw(context)
 
-    #def view_draw(self, context):
-    #    """ Called when viewport settings change """
-    #    self.processor.render_frame(context)
-
-    #def main_update(self, dt):
-    #    super().main_update(dt)
-    #    self.draw_callback()
+    def main_update(self, dt):
+        super().main_update(dt)
+        if not USE_EXTERNAL:
+            self.draw_callback()
