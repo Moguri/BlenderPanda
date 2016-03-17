@@ -1,4 +1,5 @@
 import os
+import sys
 
 USE_EXTERNAL = False
 
@@ -26,7 +27,10 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
 
     def __init__(self):
         if USE_EXTERNAL:
-            pycmd = 'python3'
+            if sys.platform == 'win32':
+                pycmd = 'ppython'
+            else:
+                pycmd = 'python'
             path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
             args = [pycmd, path]
 
