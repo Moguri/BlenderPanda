@@ -422,3 +422,24 @@ class Converter():
             node.set_attenuation(att)
 
         self.lights[lightname] = node
+
+
+if __name__ == '__main__':
+    import sys
+    import json
+
+    # TODO better arg parsing and help/usage display
+    if len(sys.argv) < 2:
+        print("Missing glTF srouce file argument")
+    elif len(sys.argv) < 3:
+        print("Missing bam destination file argument")
+
+    with open(sys.argv[1]) as f:
+        gltf_data = json.load(f)
+
+    converter = Converter()
+    converter.update(gltf_data, writing_bam=True)
+
+    #converter.active_scene.ls()
+
+    converter.active_scene.write_bam_file(sys.argv[2])

@@ -1,5 +1,8 @@
+import json
 import os
 import shutil
+import subprocess
+import sys
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
@@ -36,32 +39,32 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         return (add_delta, update_delta, remove_delta, view_delta)
 
     def execute(self, context):
-        import panda3d.core as p3d
-        from . import converter
-
         blender_converter = BTFConverter()
-        panda_converter = converter.Converter()
-
-        # Setup model path to find textures
-        p3d.get_model_path().clear()
-        p3d.get_model_path().prepend_directory(os.path.dirname(bpy.data.filepath))
-
         data = blender_converter.convert(*self._collect_deltas())
-
-        panda_converter.update(data, writing_bam=True)
-        #panda_converter.active_scene.ls()
 
         # Copy images
         for img in data.get('images', {}).values():
             src = os.path.join(os.path.dirname(bpy.data.filepath), img['uri'])
-            dst = os.path.dirname(self.filepath)
+            dst = os.path.join(os.path.dirname(self.filepath), os.path.basename(src))
             print('Copying image from "{}" to "{}"'.format(src, dst))
-            shutil.copy(src, dst)
+            shutil.copyfile(src, dst)
 
-        panda_converter.active_scene.write_bam_file(self.filepath)
+            img['uri'] = dst
 
-        # Clean up the model path
-        p3d.get_model_path().clear()
+        # Now convert the data to bam
+        gltf_fname = self.filepath + '.gltf'
+        with open(gltf_fname, 'w') as f:
+            json.dump(data, f)
+
+        args = [
+            'ppython' if sys.platform == 'win32' else 'python',
+            os.path.join(os.path.dirname(__file__), 'converter.py'),
+            gltf_fname,
+            self.filepath,
+        ]
+
+        subprocess.call(args, env=os.environ.copy())
+        os.remove(gltf_fname)
         return {'FINISHED'}
 
 
