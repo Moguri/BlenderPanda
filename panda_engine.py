@@ -7,7 +7,6 @@ USE_EXTERNAL = False
 if "bpy" in locals():
     import imp
     imp.reload(engine)
-    imp.reload(ExternalProcessor)
     if not USE_EXTERNAL:
         imp.reload(processor)
 else:
