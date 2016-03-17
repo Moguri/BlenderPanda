@@ -51,6 +51,16 @@ class ExportBam(bpy.types.Operator, ExportHelper):
 
             img['uri'] = dst
 
+        # Check if we need to convert the file
+        try:
+            if os.stat(bpy.data.filepath).st_mtime <= os.stat(self.filepath).st_mtime:
+                print('"{}" is already up-to-date, skipping'.format(self.filepath))
+                return {'FINISHED'}
+        except FileNotFoundError:
+            # The file doesn't exist, so we cannot skip conversion
+            pass
+
+
         # Now convert the data to bam
         gltf_fname = self.filepath + '.gltf'
         with open(gltf_fname, 'w') as f:
