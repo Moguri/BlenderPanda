@@ -2,6 +2,7 @@ import os
 import configparser
 import subprocess
 import shutil
+import time
 
 
 class PManException(Exception):
@@ -150,6 +151,8 @@ def build(config=None):
     srcdir = get_abs_path(config, config['build']['asset_dir'])
     dstdir = get_abs_path(config, config['build']['export_dir'])
 
+    stime = time.perf_counter()
+
     print("Read assets from: {}".format(srcdir))
     print("Export them to: {}".format(dstdir))
 
@@ -164,6 +167,8 @@ def build(config=None):
     ]
 
     subprocess.call(args, env=os.environ.copy())
+
+    print("Build took {:.4f}s".format(time.perf_counter() - stime))
 
 
 def run(config=None):
