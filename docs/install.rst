@@ -44,9 +44,10 @@ From the user addons directory (e.g., ~/.config/blender/2.xx/scripts/addons on L
 
     git clone --recursive https://github.com/Moguri/BlenderPanda.git
 
-To update to the latestversion of the addon run the following from the addon's directory::
+To update to the latest version of the addon run the following from the addon's directory::
 
-    git update
+    git pull
+    git submodule update
 
 With the addon repository cloned, the addon should now show up in the addons section of Blender's User Preferences and can be enabled from there.
 If all has gone well, a Panda3D RenderEngine should now be available.
