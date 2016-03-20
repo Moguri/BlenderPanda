@@ -1,7 +1,7 @@
 import os
 import sys
 
-USE_EXTERNAL = False
+USE_EXTERNAL = True
 
 
 import bpy
