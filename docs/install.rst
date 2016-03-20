@@ -47,7 +47,7 @@ From the user addons directory (e.g., ~/.config/blender/2.xx/scripts/addons on L
 To update to the latest version of the addon run the following from the addon's directory::
 
     git pull
-    git submodule update
+    git submodule update --init --recursive
 
 With the addon repository cloned, the addon should now show up in the addons section of Blender's User Preferences and can be enabled from there.
 If all has gone well, a Panda3D RenderEngine should now be available.
@@ -56,7 +56,6 @@ If the addon has been enabled, but does not show up in the RenderEngine drop dow
 The mostly likely source of errors is not having Panda3D setup correctly.
 If, instead, there is an error about not being able to find brte or a submodule in brte, the git repository is likely missing its submodules.
 This can happen if the ``--recursive`` option was not used.
-The following git commands should bring in the missing submodule(s)::
+The following git command should bring in the missing submodule(s)::
 
-    git submodule init
-    git submodule update
+    git submodule update --init --recursive
