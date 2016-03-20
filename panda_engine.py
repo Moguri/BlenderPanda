@@ -29,7 +29,7 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
             if sys.platform == 'win32':
                 pycmd = 'ppython'
             else:
-                pycmd = 'python'
+                pycmd = 'python3'
             path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
             args = [pycmd, path]
 

@@ -67,7 +67,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             json.dump(data, f)
 
         args = [
-            'ppython' if sys.platform == 'win32' else 'python',
+            'ppython' if sys.platform == 'win32' else 'python3',
             os.path.join(os.path.dirname(__file__), 'converter.py'),
             gltf_fname,
             self.filepath,
