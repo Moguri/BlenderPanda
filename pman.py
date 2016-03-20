@@ -1,7 +1,8 @@
-import os
 import configparser
-import subprocess
+import os
 import shutil
+import subprocess
+import sys
 import time
 
 
@@ -11,6 +12,10 @@ class PManException(Exception):
 
 
 class NoConfigError(PManException):
+    pass
+
+
+class CouldNotFindPythonError(PManException):
     pass
 
 
@@ -56,6 +61,33 @@ def get_config(startdir=None):
 
     # No config found
     raise NoConfigError("Could not find config file")
+
+
+def get_python_program(config):
+    # Always use ppython on Windows
+    if sys.platform == 'win32':
+        return 'ppython'
+
+    # Check to see if there is a version of Python that can import panda3d
+    args = [
+        'python3',
+        '-c',
+        '"import panda3d.core"',
+    ]
+    retcode = subprocess.call(args)
+
+    if retcode == 0:
+        return 'python3'
+
+    # python3 didn't work, try python2
+    args[0] = 'python2'
+    retcode = subprocess.call(args)
+
+    if retcode == 0:
+        return 'python2'
+
+    # We couldn't find a python program to run
+    raise CouldNotFindPythonError('Could not find a usable Python install')
 
 
 def write_config(config):

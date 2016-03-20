@@ -4,17 +4,13 @@ import sys
 USE_EXTERNAL = False
 
 
-if "bpy" in locals():
-    import imp
-    imp.reload(engine)
-    if not USE_EXTERNAL:
-        imp.reload(processor)
-else:
-    import bpy
-    from .brte.brte import engine
-    from .brte.brte.processors import ExternalProcessor
-    if not USE_EXTERNAL:
-        from . import processor
+import bpy
+from .brte.brte import engine
+from .brte.brte.processors import ExternalProcessor
+if not USE_EXTERNAL:
+    from . import processor
+
+import pman
 
 
 
@@ -26,10 +22,11 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
 
     def __init__(self):
         if USE_EXTERNAL:
-            if sys.platform == 'win32':
-                pycmd = 'ppython'
-            else:
-                pycmd = 'python3'
+            try:
+                config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            except pman.NoConfigError as e:
+                config = None
+            pycmd = pman.get_python_program(config)
             path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
             args = [pycmd, path]
 

@@ -39,6 +39,17 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         return (add_delta, update_delta, remove_delta, view_delta)
 
     def execute(self, context):
+        try:
+            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+        except pman.NoConfigError as e:
+            config = None
+
+        try:
+            pycmd = pman.get_python_program(config)
+        except pman.CouldNotFindPythonError as e:
+            self.report({'ERROR'}, e.value)
+            return {'CANCELLED'}
+
         blender_converter = BTFConverter()
         data = blender_converter.convert(*self._collect_deltas())
 
@@ -67,7 +78,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             json.dump(data, f)
 
         args = [
-            'ppython' if sys.platform == 'win32' else 'python3',
+            pycmd,
             os.path.join(os.path.dirname(__file__), 'converter.py'),
             gltf_fname,
             self.filepath,
