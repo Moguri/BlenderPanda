@@ -22,6 +22,10 @@ if "bpy" in locals():
     imp.reload(rendermanager)
 else:
     import bpy
+    import sys
+    import os
+    # Add this folder to the path to find PyOpenGL
+    sys.path.append(os.path.dirname(__file__))
     from . import pman
     from . import panda_engine
     from . import ui
