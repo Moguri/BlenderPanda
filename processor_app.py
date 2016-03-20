@@ -118,12 +118,15 @@ class App(ShowBase):
                 #print(data)
                 if 'extras' in data and 'view' in data['extras']:
                     viewd = data['extras']['view']
-                    width = viewd['width']
-                    height = viewd['height']
-                    proj_mat = self.converter.load_matrix(viewd['projection_matrix'])
-                    view_mat = self.converter.load_matrix(viewd['view_matrix'])
+                    if 'width' in viewd:
+                        width = viewd['width']
+                        height = viewd['height']
+                        self.make_offscreen(width, height)
+                    if 'projection_matrix' in viewd:
+                        proj_mat = self.converter.load_matrix(viewd['projection_matrix'])
+                    if 'view_matrix' in viewd:
+                        view_mat = self.converter.load_matrix(viewd['view_matrix'])
 
-                    self.make_offscreen(width, height)
 
                     # Panda wants an OpenGL model matrix instead of an OpenGL view matrix
                     view_mat.invert_in_place()
@@ -144,7 +147,7 @@ class App(ShowBase):
                 self.image_height = self.texture.get_y_size()
                 self.image_data = memoryview(self.texture.get_ram_image_as("RGB"))
                 self.server.image_lock.release()
-                self.texture.write('tex.png')
+                #self.texture.write('tex.png')
             return task.cont
 
         self.taskMgr.add(conversion, 'Conversion')
