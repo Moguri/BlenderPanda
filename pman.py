@@ -19,6 +19,10 @@ class CouldNotFindPythonError(PManException):
     pass
 
 
+class BuildError(PManException):
+    pass
+
+
 _config_defaults = {
     'general': {
         'name': 'Game',
@@ -120,7 +124,6 @@ def create_project(projectdir):
     dirs = [
         'assets',
         'game',
-        'game/assets',
         'game/blenderpanda',
     ]
 
@@ -180,10 +183,18 @@ def build(config=None):
     if config is None:
         config = get_config()
 
+    stime = time.perf_counter()
+    print("Starting build")
+
     srcdir = get_abs_path(config, config['build']['asset_dir'])
     dstdir = get_abs_path(config, config['build']['export_dir'])
 
-    stime = time.perf_counter()
+    if not os.path.exists(srcdir):
+        raise BuildError("Could not find asset directory: {}".format(srcdir))
+
+    if not os.path.exists(dstdir):
+        print("Creating asset export directory at {}".format(dstdir))
+        os.makedirs(dstdir)
 
     print("Read assets from: {}".format(srcdir))
     print("Export them to: {}".format(dstdir))
