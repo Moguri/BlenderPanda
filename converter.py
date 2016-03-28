@@ -136,7 +136,8 @@ class Converter():
 
     def load_texture(self, texname, gltf_tex, gltf_data):
         source = gltf_data['images'][gltf_tex['source']]
-        texture = TexturePool.load_texture(source['uri'], 0, False, LoaderOptions())
+        uri = Filename.fromOsSpecific(source['uri'])
+        texture = TexturePool.load_texture(uri, 0, False, LoaderOptions())
         self.textures[texname] = texture
 
     def load_material(self, matname, gltf_mat):
@@ -437,9 +438,12 @@ if __name__ == '__main__':
     with open(sys.argv[1]) as f:
         gltf_data = json.load(f)
 
+    dstfname = Filename.fromOsSpecific(sys.argv[2])
+    get_model_path().prepend_directory(dstfname.getDirname()) 
+
     converter = Converter()
     converter.update(gltf_data, writing_bam=True)
 
     #converter.active_scene.ls()
 
-    converter.active_scene.write_bam_file(sys.argv[2])
+    converter.active_scene.write_bam_file(dstfname)

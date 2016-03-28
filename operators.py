@@ -56,11 +56,13 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         # Copy images
         for img in data.get('images', {}).values():
             src = os.path.join(os.path.dirname(bpy.data.filepath), img['uri'])
+            src = os.path.abspath(src)
             dst = os.path.join(os.path.dirname(self.filepath), os.path.basename(src))
+            dst = os.path.abspath(dst)
             print('Copying image from "{}" to "{}"'.format(src, dst))
             shutil.copyfile(src, dst)
 
-            img['uri'] = dst
+            img['uri'] = os.path.relpath(dst, os.path.dirname(self.filepath))
 
         # Check if we need to convert the file
         try:
