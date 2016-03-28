@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 import time
+from collections import OrderedDict
 
 
 class PManException(Exception):
@@ -23,20 +24,20 @@ class BuildError(PManException):
     pass
 
 
-_config_defaults = {
-    'general': {
-        'name': 'Game',
-        'render_plugin': '',
-    },
-    'build': {
-        'asset_dir': 'assets/',
-        'export_dir': 'game/assets/',
-    },
-    'run': {
-        'main_file': 'game/main.py',
-        'auto_build': True,
-    }
-}
+_config_defaults = OrderedDict([
+    ('general', OrderedDict([
+        ('name', 'Game'),
+        ('render_plugin', ''),
+    ])),
+    ('build', OrderedDict([
+        ('asset_dir', 'assets/'),
+        ('export_dir', 'game/assets/'),
+    ])),
+    ('run', OrderedDict([
+        ('main_file', 'game/main.py'),
+        ('auto_build', True),
+    ])),
+])
 
 
 def get_config(startdir=None):
