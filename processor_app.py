@@ -128,15 +128,13 @@ class App(ShowBase):
                         self.make_offscreen(width, height)
                     if 'projection_matrix' in viewd:
                         proj_mat = self.converter.load_matrix(viewd['projection_matrix'])
+                        self.view_lens.set_user_mat(proj_mat)
                     if 'view_matrix' in viewd:
                         view_mat = self.converter.load_matrix(viewd['view_matrix'])
 
-
-                    # Panda wants an OpenGL model matrix instead of an OpenGL view matrix
-                    view_mat.invert_in_place()
-
-                    self.view_lens.set_user_mat(proj_mat)
-                    self.view_lens.set_view_mat(view_mat)
+                        # Panda wants an OpenGL model matrix instead of an OpenGL view matrix
+                        view_mat.invert_in_place()
+                        self.view_lens.set_view_mat(view_mat)
 
                 self.converter.update(data)
                 bg = self.converter.background_color
