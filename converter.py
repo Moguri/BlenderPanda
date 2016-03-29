@@ -138,6 +138,17 @@ class Converter():
         source = gltf_data['images'][gltf_tex['source']]
         uri = Filename.fromOsSpecific(source['uri'])
         texture = TexturePool.load_texture(uri, 0, False, LoaderOptions())
+        use_srgb = False
+        if 'format' in gltf_tex and gltf_tex['format'] in (0x8C40, 0x8C42):
+            use_srgb = True
+        elif 'internalFormat' in gltf_tex and gltf_tex['internalFormat'] in (0x8C40, 0x8C42):
+            use_srgb = True
+
+        if use_srgb:
+            if texture.get_num_components() == 3:
+                texture.set_format(Texture.F_srgb)
+            elif texture.get_num_components() == 4:
+                texture.set_format(Texture.F_srgb_alpha)
         self.textures[texname] = texture
 
     def load_material(self, matname, gltf_mat):
