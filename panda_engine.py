@@ -28,7 +28,7 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
                 config = None
             pycmd = pman.get_python_program(config)
             path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
-            args = [pycmd, path]
+            args = [pycmd, path, os.path.dirname(bpy.data.filepath)]
 
             super().__init__(processor=ExternalProcessor(args))
         else:

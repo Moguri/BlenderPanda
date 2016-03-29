@@ -1,6 +1,7 @@
 import ctypes
 import json
 import math
+import os
 import socket
 import struct
 import sys
@@ -86,7 +87,7 @@ class Server(threading.Thread):
 
 
 class App(ShowBase):
-    def __init__(self):
+    def __init__(self, model_dirs):
         ShowBase.__init__(self)
         self.view_lens = p3d.MatrixLens()
         self.view_camera = p3d.NodePath(p3d.Camera('view'))
@@ -97,6 +98,9 @@ class App(ShowBase):
         self.pipe = p3d.GraphicsPipeSelection.get_global_ptr().make_module_pipe('pandagl')
 
         self.bg = p3d.LVecBase4(0.0, 0.0, 0.0, 1.0)
+
+        for mdir in model_dirs:
+            p3d.get_model_path().prepend_directory(mdir)
 
         self.texture = p3d.Texture()
         self.win = None
@@ -221,5 +225,8 @@ class App(ShowBase):
 
 
 if __name__ == "__main__":
-    app = App()
+    model_dirs = []
+    if len(sys.argv) > 1 and sys.argv[1]:
+        model_dirs.append(sys.argv[1])
+    app = App(model_dirs)
     app.run()
