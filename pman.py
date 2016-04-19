@@ -133,6 +133,7 @@ def create_project(projectdir):
         os.path.join(templatedir, 'bpbase.py'),
         'rendermanager.py',
         'pman.py',
+        'pman_build.py',
     ]
 
     dirs = [os.path.join(projectdir, i) for i in dirs]

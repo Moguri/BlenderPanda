@@ -1,4 +1,5 @@
 from .rendermanager import create_render_manager
+from . import pman
 
 
 class BPBase:
@@ -7,4 +8,7 @@ class BPBase:
 
 
 def init(base):
+    config = pman.get_config()
+    if config.getboolean('run', 'auto_build'):
+        pman.build(config)
     base._bpbase = BPBase(base)
