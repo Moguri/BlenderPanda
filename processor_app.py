@@ -57,7 +57,11 @@ class Server(threading.Thread):
             msg_id = struct.unpack('=H', msg_header)[0]
             if msg_id == 0:
                 data_size = struct.unpack('=I', self.socket.recv(4))[0]
-                data = self.socket.recv(data_size)
+                data = bytearray(data_size)
+                view = memoryview(data)
+                while len(view) > 0:
+                    rcv_size = self.socket.recv_into(view, len(view))
+                    view = view[rcv_size:]
                 data = json.loads(data.decode('ascii'))
 
                 self.data_handler(data)
