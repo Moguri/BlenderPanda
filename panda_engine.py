@@ -30,7 +30,7 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
             path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
             args = [pycmd, path, os.path.dirname(bpy.data.filepath)]
 
-            super().__init__(processor=ExternalProcessor(args), use_bgr_texture=False)
+            super().__init__(processor=ExternalProcessor(args), use_bgr_texture=True)
         else:
             if PandaEngine._processor is None:
                 PandaEngine._processor = processor.PandaProcessor()
