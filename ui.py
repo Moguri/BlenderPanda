@@ -211,6 +211,14 @@ def get_panels():
         "DATA_PT_lamp",
         "WORLD_PT_preview",
         "WORLD_PT_world",
+        "TEXTURE_PT_context_texture",
+        "TEXTURE_PT_preview",
+        "TEXTURE_PT_colors",
+        "TEXTURE_PT_image",
+        "TEXTURE_PT_image_sampling",
+        "TEXTURE_PT_image_mapping",
+        "TEXTURE_PT_mapping",
+        "TEXTURE_PT_influence",
     ]
 
     return [getattr(bpy.types, p) for p in panels if hasattr(bpy.types, p)]
