@@ -152,7 +152,7 @@ class App(ShowBase):
                 self.server.image_lock.acquire()
                 self.image_width = self.texture.get_x_size()
                 self.image_height = self.texture.get_y_size()
-                self.image_data = memoryview(self.texture.get_ram_image())
+                self.image_data = memoryview(self.texture.get_ram_image_as("BGR"))
                 self.server.image_lock.release()
                 #print('Extern: Updated image data in {}ms'.format((time.perf_counter() - start) * 1000))
                 #self.texture.write('tex.png')
