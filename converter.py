@@ -64,6 +64,11 @@ class Converter():
                     panda_node = panda_node.make_copy()
             np = root.attach_new_node(panda_node)
 
+            # Check if we need to deal with negative scale values
+            scale = panda_node.get_transform().get_scale()
+            if (scale.x * scale.y * scale.z < 0):
+                np.set_attrib(CullFaceAttrib.make_reverse())
+
             if 'meshes' in gltf_node:
                 np_tmp = np
                 if 'skeletons' in gltf_node:
