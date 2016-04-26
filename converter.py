@@ -89,10 +89,8 @@ class Converter():
                     if copy_lights:
                         light = light.make_copy()
                     lnp = np.attach_new_node(light)
-                    try:
+                    if isinstance(light, Light):
                         root.set_light(lnp)
-                    except AssertionError as e:
-                        print("Bad light", lightid)
 
             for child_nodeid in gltf_node['children']:
                 add_node(np, gltf_scene, child_nodeid)
@@ -419,14 +417,18 @@ class Converter():
                 node = PointLight(lightname)
             elif ltype == 'directional':
                 node = DirectionalLight(lightname)
-            elif ltype== 'spot':
+            elif ltype == 'spot':
                 node = Spotlight(lightname)
             else:
                 print("Unsupported light type for light with name {}: {}".format(lightname, gltf_light['type']))
                 node = PandaNode(lightname)
 
         # Update the light
-        lightprops = gltf_light[ltype]
+        if ltype == 'unsupported':
+            lightprops = {}
+        else:
+            lightprops = gltf_light[ltype]
+
         if ltype in ('point', 'directional', 'spot'):
             node.set_color(LColor(*lightprops['color'], w=1))
 
