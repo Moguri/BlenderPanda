@@ -1,6 +1,9 @@
 from importlib.machinery import SourceFileLoader
 
-from . import pman
+try:
+    import pman
+except ImportError:
+    from . import pman
 
 
 class BasicRenderManager:

@@ -16,7 +16,10 @@ except ImportError:
 from direct.showbase.ShowBase import ShowBase
 import panda3d.core as p3d
 
+import pman
+
 from converter import Converter
+import rendermanager
 
 
 p3d.load_prc_file_data('', 
@@ -91,20 +94,19 @@ class Server(threading.Thread):
 
 
 class App(ShowBase):
-    def __init__(self, model_dirs):
+    def __init__(self, workingdir):
         ShowBase.__init__(self)
         self.view_lens = p3d.MatrixLens()
-        self.view_camera = p3d.NodePath(p3d.Camera('view'))
-        self.view_camera.node().set_lens(self.view_lens)
-        self.view_camera.node().set_active(True)
-        self.view_camera.reparent_to(self.render)
+        self.cam = p3d.NodePath(p3d.Camera('view'))
+        self.cam.node().set_lens(self.view_lens)
+        self.cam.node().set_active(True)
+        self.cam.reparent_to(self.render)
 
         self.pipe = p3d.GraphicsPipeSelection.get_global_ptr().make_module_pipe('pandagl')
 
         self.bg = p3d.LVecBase4(0.0, 0.0, 0.0, 1.0)
 
-        for mdir in model_dirs:
-            p3d.get_model_path().prepend_directory(mdir)
+        p3d.get_model_path().prepend_directory(workingdir)
 
         self.texture = p3d.Texture()
         self.win = None
@@ -176,6 +178,14 @@ class App(ShowBase):
                 return task.cont
             self.taskMgr.add(server_task, 'Server Communication')
 
+
+        try:
+            pman_conf = pman.get_config(workingdir)
+        except pman.NoConfigError:
+            pman_conf = None
+
+        self.rendermanager = rendermanager.create_render_manager(self, pman_conf)
+
     def make_offscreen(self, sx, sy):
         #sx = p3d.Texture.up_to_power_2(sx)
         #sy = p3d.Texture.up_to_power_2(sy)
@@ -208,7 +218,7 @@ class App(ShowBase):
         )
 
         dr = self.win.make_mono_display_region()
-        dr.set_camera(self.view_camera)
+        dr.set_camera(self.cam)
         dr.set_active(True)
         dr.set_clear_color_active(True)
         dr.set_clear_color(self.bg)
@@ -230,8 +240,5 @@ class App(ShowBase):
 
 
 if __name__ == "__main__":
-    model_dirs = []
-    if len(sys.argv) > 1 and sys.argv[1]:
-        model_dirs.append(sys.argv[1])
-    app = App(model_dirs)
+    app = App(sys.argv[1])
     app.run()
