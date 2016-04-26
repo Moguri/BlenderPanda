@@ -32,6 +32,7 @@ _config_defaults = OrderedDict([
     ('build', OrderedDict([
         ('asset_dir', 'assets/'),
         ('export_dir', 'game/assets/'),
+        ('ignore_exts', 'blend1, blend2'),
     ])),
     ('run', OrderedDict([
         ('main_file', 'game/main.py'),
@@ -201,17 +202,54 @@ def build(config=None):
     print("Read assets from: {}".format(srcdir))
     print("Export them to: {}".format(dstdir))
 
-    args = [
-        'blender',
-        '-b',
-        '-P',
-        os.path.join(os.path.dirname(__file__), 'pman_build.py'),
-        '--',
-        srcdir,
-        dstdir,
-    ]
+    ignore_exts = [i.strip() for i in config['build']['ignore_exts'].split(',')]
+    print("Ignoring extensions: {}".format(ignore_exts))
 
-    subprocess.call(args, env=os.environ.copy())
+    num_blends = 0
+    for root, dirs, files in os.walk(srcdir):
+        for asset in files:
+            src = os.path.join(root, asset)
+            dst = src.replace(srcdir, dstdir)
+
+            iext = None
+            for ext in ignore_exts:
+                if asset.endswith(ext):
+                    iext = ext
+                    break
+            if iext is not None:
+                print('Skip building file with ignored extension ({}): {}'.format(iext, dst))
+                continue
+
+            if asset.endswith('.blend'):
+                dst = dst.replace('.blend', '.bam')
+
+            if os.path.exists(dst) and os.stat(src).st_mtime <= os.stat(dst).st_mtime:
+                print('Skip building up-to-date file: {}'.format(dst))
+                continue
+
+            if asset.endswith('.blend'):
+                # Handle with Blender
+                num_blends += 1
+            else:
+                print('Copying non-blend file from "{}" to "{}"'.format(src, dst))
+                try:
+                    os.makedirs(os.path.dirname(dst))
+                except FileExistsError:
+                    pass
+                shutil.copyfile(src, dst)
+
+    if num_blends > 0:
+        args = [
+            'blender',
+            '-b',
+            '-P',
+            os.path.join(os.path.dirname(__file__), 'pman_build.py'),
+            '--',
+            srcdir,
+            dstdir,
+        ]
+
+        subprocess.call(args, env=os.environ.copy())
 
     print("Build took {:.4f}s".format(time.perf_counter() - stime))
 

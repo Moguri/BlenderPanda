@@ -17,6 +17,10 @@ class ExportBam(bpy.types.Operator, ExportHelper):
     bl_idname = 'panda_engine.export_bam'
     bl_label = 'Export BAM'
 
+    copy_images = bpy.props.BoolProperty(
+        default=True,
+    )
+
     # For ExportHelper
     filename_ext = '.bam'
     filter_glob = bpy.props.StringProperty(
@@ -59,8 +63,9 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             src = os.path.abspath(src)
             dst = os.path.join(os.path.dirname(self.filepath), os.path.basename(src))
             dst = os.path.abspath(dst)
-            print('Copying image from "{}" to "{}"'.format(src, dst))
-            shutil.copyfile(src, dst)
+            if self.copy_images:
+                print('Copying image from "{}" to "{}"'.format(src, dst))
+                shutil.copyfile(src, dst)
 
             img['uri'] = os.path.relpath(dst, os.path.dirname(self.filepath))
 

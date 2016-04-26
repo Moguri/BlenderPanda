@@ -4,26 +4,30 @@ import shutil
 
 import bpy
 
-print(sys.argv)
+#print(sys.argv)
 srcdir, dstdir = sys.argv[-2:]
 
-print('Exporting:', srcdir)
-print('Export to:', dstdir)
+#print('Exporting:', srcdir)
+#print('Export to:', dstdir)
 
-for asset in os.listdir(srcdir):
-    src = os.path.join(srcdir, asset)
-    dst = os.path.join(dstdir, asset)
+for root, dirs, files in os.walk(srcdir):
+    for asset in files:
+        src = os.path.join(root, asset)
+        dst = src.replace(srcdir, dstdir).replace('.blend', '.bam')
 
-    if os.path.exists(dst) and os.stat(src).st_mtime <= os.stat(dst).st_mtime:
-        print('Skip building up-to-date file: {}'.format(dst))
-        continue
+        if not asset.endswith('.blend'):
+            # Only convert blend files with pman_build stub
+            continue
 
-    if asset.endswith('.blend'):
-        print('Converting .blend file ({}) to .bam ({})'.format(src, dst))
-        topath = os.path.join(dstdir, asset.replace('.blend', '.bam'))
-        dst = dst.replace('.blend', '.bam')
-        bpy.ops.wm.open_mainfile(filepath=src)
-        bpy.ops.panda_engine.export_bam(filepath=dst)
-    else:
-        print('Copying non .blend file from "{}" to "{}'.format(src, dst))
-        shutil.copyfile(src, dst)
+        if os.path.exists(dst) and os.stat(src).st_mtime <= os.stat(dst).st_mtime:
+            # Don't convert up-to-date-files
+            continue
+
+        if asset.endswith('.blend'):
+            print('Converting .blend file ({}) to .bam ({})'.format(src, dst))
+            try:
+                os.makedirs(os.path.dirname(dst))
+            except FileExistsError:
+                pass
+            bpy.ops.wm.open_mainfile(filepath=src)
+            bpy.ops.panda_engine.export_bam(filepath=dst, copy_images=False)
