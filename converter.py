@@ -417,6 +417,7 @@ class Converter():
                 node = PointLight(lightname)
             elif ltype == 'directional':
                 node = DirectionalLight(lightname)
+                node.set_direction((0, 0, -1))
             elif ltype == 'spot':
                 node = Spotlight(lightname)
             else:
