@@ -53,6 +53,10 @@ class Converter():
 
         # Build scenegraphs
         def add_node(root, gltf_scene, nodeid):
+            if nodeid not in gltf_data['nodes']:
+                print("Could not find node with id: {}".format(nodeid))
+                return
+
             gltf_node = gltf_data['nodes'][nodeid]
             if 'jointName' in gltf_node:
                 # don't handle joints here
