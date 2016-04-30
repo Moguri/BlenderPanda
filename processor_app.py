@@ -187,8 +187,8 @@ class App(ShowBase):
         self.rendermanager = rendermanager.create_render_manager(self, pman_conf)
 
     def make_offscreen(self, sx, sy):
-        #sx = p3d.Texture.up_to_power_2(sx)
-        #sy = p3d.Texture.up_to_power_2(sy)
+        sx = p3d.Texture.up_to_power_2(sx)
+        sy = p3d.Texture.up_to_power_2(sy)
 
         if self.win and self.win.get_size()[0] == sx and self.win.get_size()[1] == sy:
             # The current window is good, don't waste time making a new one
