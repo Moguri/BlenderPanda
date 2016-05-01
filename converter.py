@@ -76,8 +76,8 @@ class Converter():
             if 'meshes' in gltf_node:
                 np_tmp = np
                 if 'skeletons' in gltf_node:
-                    skel = self.characters[gltf_node['skeletons'][0]]
-                    np_tmp = np.attach_new_node(skel)
+                    char = self.characters[nodeid]
+                    np_tmp = np.attach_new_node(char)
 
                 for meshid in gltf_node['meshes']:
                     mesh = self.meshes[meshid]
@@ -227,12 +227,84 @@ class Converter():
 
         self.mat_states[matname] = state
 
+    def create_anim(self, character, skel_name, root_bone, anim_name, gltf_action, gltf_data):
+        if 'extras' in gltf_data['scenes'][gltf_data['scene']]:
+            fps = gltf_data['scenes'][gltf_data['scene']].get('frames_per_second', 30)
+        else:
+            fps = 30
+
+        num_frames = gltf_action['frames']
+
+        bundle = AnimBundle(character.get_name(), fps, num_frames)
+        skeleton = AnimGroup(bundle, '<skeleton>')
+
+        def create_anim_channel(parent, bone):
+            channels = [chan for chan in gltf_action['channels'] if chan['id'] == '{}_{}'.format(skel_name, bone['name'])]
+
+            group = AnimChannelMatrixXfmTable(parent, bone['name'])
+
+            def extract_chan_data(path):
+                accs = [
+                    gltf_data['accessors'][chan['data']]
+                    for chan in sorted(channels, key=lambda x: x['index'])
+                    if chan['path'] == path
+                ]
+                vals = []
+                for acc in accs:
+                    bv = gltf_data['bufferViews'][acc['bufferView']]
+                    buff = gltf_data['buffers'][bv['buffer']]
+                    buff_data = base64.b64decode(buff['uri'].split(',')[1])
+                    start = bv['byteOffset']
+                    end = bv['byteOffset'] + bv['byteLength']
+
+                    data = [struct.unpack_from('<f', buff_data, idx)[0] for idx in range(start, end, 4)]
+
+                    vals.append(data)
+                return vals
+
+            loc_vals = extract_chan_data('translation')
+            rot_vals = extract_chan_data('rotation')
+            scale_vals = extract_chan_data('scale')
+
+            if loc_vals:
+                group.set_table(b'x', CPTAFloat(PTAFloat(loc_vals[0])))
+                group.set_table(b'y', CPTAFloat(PTAFloat(loc_vals[1])))
+                group.set_table(b'z', CPTAFloat(PTAFloat(loc_vals[2])))
+
+            if rot_vals:
+                tableh = PTAFloat.empty_array(num_frames)
+                tablep = PTAFloat.empty_array(num_frames)
+                tabler = PTAFloat.empty_array(num_frames)
+                for i in range(num_frames):
+                    quat = LQuaternion(rot_vals[0][i], rot_vals[1][i], rot_vals[2][i], rot_vals[3][i])
+                    hpr = quat.get_hpr()
+                    tableh.set_element(i, hpr.get_x())
+                    tablep.set_element(i, hpr.get_y())
+                    tabler.set_element(i, hpr.get_z())
+                group.set_table(b'h', CPTAFloat(tableh))
+                group.set_table(b'p', CPTAFloat(tablep))
+                group.set_table(b'r', CPTAFloat(tabler))
+
+            if scale_vals:
+                group.set_table(b'i', CPTAFloat(PTAFloat(scale_vals[0])))
+                group.set_table(b'j', CPTAFloat(PTAFloat(scale_vals[1])))
+                group.set_table(b'k', CPTAFloat(PTAFloat(scale_vals[2])))
+
+
+            for child in bone['children']:
+                create_anim_channel(group, gltf_data['nodes'][child])
+
+        create_anim_channel(skeleton, root_bone)
+        character.add_child(AnimBundleNode(root_bone['name'], bundle))
+
+
     def create_character(self, gltf_node, gltf_skin, gltf_mesh, gltf_data):
-        #print("Creating character for", gltf_mesh['name'])
+        nodeid = gltf_node['name']
+        #print("Creating skinned mesh for", gltf_mesh['name'])
         skel_name = gltf_node['skeletons'][0]
         root = gltf_data['nodes'][skel_name]
 
-        character = Character(gltf_mesh['name'])
+        character = Character(nodeid)
         bundle = character.get_bundle(0)
         skeleton = PartGroup(bundle, "<skeleton>")
         jvtmap = {}
@@ -253,8 +325,26 @@ class Converter():
                 create_joint(joint, bone_node)
 
         create_joint(skeleton, root)
-        #print("Adding character to map under", skel_name)
-        self.characters[skel_name] = character
+        #print("Adding skinned mesh to", nodeid)
+        self.characters[nodeid] = character
+
+        # convert animations
+        #print("Looking for actions for", skel_name)
+        if 'extras' in gltf_data and 'actions' in gltf_data['extras']:
+            anims = {
+                act_name.split('|')[-1]: act
+                for act_name, act in gltf_data['extras']['actions'].items()
+                if act_name.startswith(skel_name)
+            }
+        else:
+            anims = {}
+
+        if anims:
+            #print("Found anims for", nodeid)
+            for anim, gltf_action in anims.items():
+                #print("\t", anim)
+                self.create_anim(character, skel_name, root, anim, gltf_action, gltf_data)
+
         return character, jvtmap
 
 
