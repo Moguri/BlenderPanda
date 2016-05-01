@@ -209,6 +209,10 @@ class Converter():
             else:
                 texstage.set_texcoord_name(InternalName.get_texcoord())
 
+            if texdata.get_num_components() == 4:
+                state = state.set_attrib(TransparencyAttrib.make(TransparencyAttrib.M_alpha))
+
+
             tex_attrib = tex_attrib.add_on_stage(texstage, texdata)
             state = state.set_attrib(tex_attrib)
 
