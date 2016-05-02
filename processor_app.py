@@ -33,7 +33,6 @@ class Server(threading.Thread):
     def __init__(self, data_handler, update_handler):
         super().__init__()
         self.socket = socket.socket()
-        self.socket.settimeout(5)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.image_lock = threading.Lock()
@@ -54,10 +53,23 @@ class Server(threading.Thread):
         self.data_handler = data_handler
         self.update_handler = update_handler
 
+    def destroy(self):
+        if self.socket:
+            self.socket.shutdown(socket.SHUT_RDWR)
+            self.socket.close()
+            self.socket = None
+
     def run(self):
         while True:
             msg_header = self.socket.recv(2)
-            msg_id = struct.unpack('=H', msg_header)[0]
+            try:
+                msg_id = struct.unpack('=H', msg_header)[0]
+            except struct.error as e:
+                if (len(msg_header) == 0):
+                    print("Received zero-length msg header, aborting")
+                    break
+                else:
+                    raise e
             if msg_id == 0:
                 data_size = struct.unpack('=I', self.socket.recv(4))[0]
                 data = bytearray(data_size)
@@ -169,6 +181,8 @@ class App(ShowBase):
             def server_mon(task):
                 if not self.server.is_alive():
                     print('Server thread has terminated, closing program')
+                    self.server.destroy()
+                    time.sleep(0.1)
                     sys.exit()
                 return task.cont
             self.taskMgr.add(server_mon, 'Server Monitor')
