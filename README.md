@@ -3,9 +3,5 @@
 # BlenderPanda
 Blender addon for integrating [Panda3D](http://www.panda3d.org/)
 
-# Dependencies
-* Blender
-* Python 3 build of Panda3D
-
-# Installation
-Getting BlenderPanda installed and running can be a little tricky, so please carefully read the [installation docs](https://blenderpanda.readthedocs.org/en/latest/install.html).
+# Getting Started
+Documentation for getting started with BlenderPanda can be found [here](https://blenderpanda.readthedocs.org/en/latest/getting_started.html).
