@@ -22,7 +22,7 @@ On Windows this will likely be the ``ppython.exe`` that ships with the Panda3D S
 Installing the Addon
 ^^^^^^^^^^^^^^^^^^^^
 
-After dependencies downloaded and setup, it is time to install the addon itself.
+After dependencies are downloaded and setup, it is time to install the addon itself.
 GitHub's Download ZIP option does not support git submodules, which are used by BlenderPanda to bring in the `BlenderRealtimeEngineAddon <https://github.com/Kupoman/BlenderRealtimeEngineAddon>`_.
 This makes `git <https://git-scm.com/>`_ the recommended way to grab the addon.
 In the future, packaged releases will be made that will not require git.
@@ -111,7 +111,7 @@ A quick explanation of some of the files:
 *game/assets*
 	While not initially created, this is the default export directory.
 	When building a project, all converted/built files will be put here.
-	This file is created automatically as part of the build step and should not be put under version control.
+	This directory is created automatically as part of the build step and should not be put under version control.
 
 When BlenderPanda detects a project, the render properties are updated:
 
