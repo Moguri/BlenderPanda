@@ -21,6 +21,10 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         default=True,
     )
 
+    skip_up_to_date = bpy.props.BoolProperty(
+        default=False,
+    )
+
     # For ExportHelper
     filename_ext = '.bam'
     filter_glob = bpy.props.StringProperty(
@@ -74,7 +78,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
 
         # Check if we need to convert the file
         try:
-            if os.stat(bpy.data.filepath).st_mtime <= os.stat(self.filepath).st_mtime:
+            if self.skip_up_to_date and os.stat(bpy.data.filepath).st_mtime <= os.stat(self.filepath).st_mtime:
                 print('"{}" is already up-to-date, skipping'.format(self.filepath))
                 return {'FINISHED'}
         except FileNotFoundError:

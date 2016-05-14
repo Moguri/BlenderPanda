@@ -30,4 +30,4 @@ for root, dirs, files in os.walk(srcdir):
             except FileExistsError:
                 pass
             bpy.ops.wm.open_mainfile(filepath=src)
-            bpy.ops.panda_engine.export_bam(filepath=dst, copy_images=False)
+            bpy.ops.panda_engine.export_bam(filepath=dst, copy_images=False, skip_up_to_date=True)
