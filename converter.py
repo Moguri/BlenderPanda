@@ -244,22 +244,38 @@ class Converter():
             group = AnimChannelMatrixXfmTable(parent, bone['name'])
 
             def extract_chan_data(path):
+                vals = []
                 accs = [
                     gltf_data['accessors'][chan['data']]
-                    for chan in sorted(channels, key=lambda x: x['index'])
+                    for chan in channels
                     if chan['path'] == path
                 ]
-                vals = []
-                for acc in accs:
+
+                if accs:
+                    acc = accs[0]
                     bv = gltf_data['bufferViews'][acc['bufferView']]
                     buff = gltf_data['buffers'][bv['buffer']]
                     buff_data = base64.b64decode(buff['uri'].split(',')[1])
                     start = bv['byteOffset']
                     end = bv['byteOffset'] + bv['byteLength']
 
-                    data = [struct.unpack_from('<f', buff_data, idx)[0] for idx in range(start, end, 4)]
 
-                    vals.append(data)
+                    if path == 'rotation':
+                        data = [struct.unpack_from('<ffff', buff_data, idx) for idx in range(start, end, 4 * 4)]
+                        vals += [
+                            [i[0] for i in data],
+                            [i[1] for i in data],
+                            [i[2] for i in data],
+                            [i[3] for i in data]
+                        ]
+                    else:
+                        data = [struct.unpack_from('<fff', buff_data, idx) for idx in range(start, end, 3 * 4)]
+                        vals += [
+                            [i[0] for i in data],
+                            [i[1] for i in data],
+                            [i[2] for i in data]
+                        ]
+
                 return vals
 
             loc_vals = extract_chan_data('translation')
