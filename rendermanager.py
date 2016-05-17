@@ -1,4 +1,9 @@
-from importlib.machinery import SourceFileLoader
+try:
+    from importlib.machinery import SourceFileLoader
+    HAS_SFL = True
+except ImportError:
+    import imp
+    HAS_SFL = False
 
 try:
     import pman
@@ -28,7 +33,11 @@ def create_render_manager(base, config=None):
         return BasicRenderManager(base)
 
     path = pman.get_abs_path(config, renderplugin)
-    mod = SourceFileLoader("render_plugin", path).load_module()
+
+    if HAS_SFL:
+        mod = SourceFileLoader("render_plugin", path).load_module()
+    else:
+        mod = imp.load_source("render_plugin", path)
 
     return mod.get_plugin()(base)
 
