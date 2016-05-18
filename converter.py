@@ -381,8 +381,8 @@ class Converter():
 
         if is_skinned:
             # Find all nodes that use this mesh and try to find a skin
-            gltf_nodes = [node for node in gltf_data['nodes'].values() if 'meshes' in node and meshname in node['meshes']]
-            gltf_node = [node for node in gltf_nodes if 'skin' in node][0]
+            gltf_nodes = [gltf_node for gltf_node in gltf_data['nodes'].values() if 'meshes' in gltf_node and meshname in gltf_node['meshes']]
+            gltf_node = [gltf_node for gltf_node in gltf_nodes if 'skin' in gltf_node][0]
             gltf_skin = gltf_data['skins'][gltf_node['skin']]
             character, jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
             tb_va = GeomVertexArrayFormat()
