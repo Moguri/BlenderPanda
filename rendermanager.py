@@ -27,7 +27,7 @@ def create_render_manager(base, config=None):
             print("RenderManager: Could not find pman config, falling back to basic plugin")
             config = None
 
-    renderplugin = config['general']['render_plugin'] if config else ''
+    renderplugin = config.get('general', 'render_plugin') if config else ''
 
     if not renderplugin:
         return BasicRenderManager(base)

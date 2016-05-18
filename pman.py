@@ -44,6 +44,14 @@ _config_defaults = OrderedDict([
 ])
 
 
+def __py2_read_dict(config, d):
+    for section, options in d.items():
+        config.add_section(section)
+
+        for option, value in options.items():
+            config.set(section, option, value)
+
+
 def get_config(startdir=None):
     try:
         if startdir is None:
@@ -59,11 +67,14 @@ def get_config(startdir=None):
         if cdir.strip() and '.pman' in os.listdir(cdir):
             configpath = os.path.join(cdir, '.pman')
             config = configparser.ConfigParser()
-            config.read_dict(_config_defaults)
+            if hasattr(config, 'read_dict'):
+                config.read_dict(_config_defaults)
+            else:
+                __py2_read_dict(config, _config_defaults)
             config.read(configpath)
 
-            config['internal'] = {}
-            config['internal']['projectdir'] = os.path.dirname(configpath)
+            config.add_section('internal')
+            config.set('internal', 'projectdir', os.path.dirname(configpath))
             return config
 
         dirs.pop()
@@ -106,7 +117,7 @@ def write_config(config):
     writecfg.read_dict(config)
     writecfg.remove_section('internal')
 
-    with open(os.path.join(config['internal']['projectdir'], '.pman'), 'w') as f:
+    with open(os.path.join(config.get('internal', 'projectdir'), '.pman'), 'w') as f:
         writecfg.write(f)
 
 
@@ -178,24 +189,27 @@ def create_project(projectdir):
 
 def get_abs_path(config, path):
     return os.path.join(
-        config['internal']['projectdir'],
+        config.get('internal', 'projectdir'),
         path
     )
 
 
 def get_rel_path(config, path):
-    return os.path.relpath(path, config['internal']['projectdir'])
+    return os.path.relpath(path, config.get('internal', 'projectdir'))
 
 
 def build(config=None):
     if config is None:
         config = get_config()
 
-    stime = time.perf_counter()
+    if hasattr(time, 'perf_counter'):
+        stime = time.perf_counter()
+    else:
+        stime = time.time()
     print("Starting build")
 
-    srcdir = get_abs_path(config, config['build']['asset_dir'])
-    dstdir = get_abs_path(config, config['build']['export_dir'])
+    srcdir = get_abs_path(config, config.get('build', 'asset_dir'))
+    dstdir = get_abs_path(config, config.get('build', 'export_dir'))
 
     if not os.path.exists(srcdir):
         raise BuildError("Could not find asset directory: {}".format(srcdir))
@@ -207,7 +221,7 @@ def build(config=None):
     print("Read assets from: {}".format(srcdir))
     print("Export them to: {}".format(dstdir))
 
-    ignore_exts = [i.strip() for i in config['build']['ignore_exts'].split(',')]
+    ignore_exts = [i.strip() for i in config.get('build', 'ignore_exts').split(',')]
     print("Ignoring extensions: {}".format(ignore_exts))
 
     num_blends = 0
@@ -237,10 +251,8 @@ def build(config=None):
                 num_blends += 1
             else:
                 print('Copying non-blend file from "{}" to "{}"'.format(src, dst))
-                try:
+                if not os.path.exists(os.path.dirname(dst)):
                     os.makedirs(os.path.dirname(dst))
-                except FileExistsError:
-                    pass
                 shutil.copyfile(src, dst)
 
     if num_blends > 0:
@@ -256,7 +268,11 @@ def build(config=None):
 
         subprocess.call(args, env=os.environ.copy())
 
-    print("Build took {:.4f}s".format(time.perf_counter() - stime))
+    if hasattr(time, 'perf_counter'):
+        etime = time.perf_counter()
+    else:
+        etime = time.time()
+    print("Build took {:.4f}s".format(etime - stime))
 
 
 def run(config=None):
@@ -266,8 +282,8 @@ def run(config=None):
     if config.getboolean('run', 'auto_build'):
         build(config)
 
-    mainfile = get_abs_path(config, config['run']['main_file'])
+    mainfile = get_abs_path(config, config.get('run', 'main_file'))
     print("Running main file: {}".format(mainfile))
-    args = ['python', mainfile]
+    args = [get_python_program(config), mainfile]
     #print("Args: {}".format(args))
-    subprocess.Popen(args)
+    subprocess.Popen(args, cwd=config.get('internal', 'projectdir'))
