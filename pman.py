@@ -1,10 +1,13 @@
-import configparser
 import os
 import shutil
 import subprocess
 import sys
 import time
 from collections import OrderedDict
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 
 class PManException(Exception):
@@ -78,16 +81,18 @@ def get_python_program(config):
     args = [
         'python3',
         '-c',
-        '"import panda3d.core"',
+        'import panda3d.core; import direct',
     ]
-    retcode = subprocess.call(args)
+    with open(os.devnull, 'w') as fp:
+        retcode = subprocess.call(args, stderr=fp)
 
     if retcode == 0:
         return 'python3'
 
     # python3 didn't work, try python2
     args[0] = 'python2'
-    retcode = subprocess.call(args)
+    with open(os.devnull, 'w') as fp:
+        retcode = subprocess.call(args, stderr=fp)
 
     if retcode == 0:
         return 'python2'

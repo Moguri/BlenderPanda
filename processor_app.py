@@ -31,7 +31,7 @@ USE_THREAD = True
 
 class Server(threading.Thread):
     def __init__(self, data_handler, update_handler):
-        super().__init__()
+        threading.Thread.__init__(self)
         self.socket = socket.socket()
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -83,7 +83,7 @@ class Server(threading.Thread):
 
                 self.socket.send(struct.pack('B', 0))
             elif msg_id == 1:
-                start = time.perf_counter()
+                #start = time.perf_counter()
                 dt = struct.unpack('=f', self.socket.recv(4))[0]
 
                 self.image_lock.acquire()
@@ -93,7 +93,7 @@ class Server(threading.Thread):
                 self.socket.send(struct.pack('=HH', width, height))
                 self.socket.sendall(img_buffer)
                 self.image_lock.release()
-                transfer_t = time.perf_counter() - start
+                #transfer_t = time.perf_counter() - start
                 data_size = width*height*3
                 #print('Extern: Update time: {}ms'.format(transfer_t * 1000))
                 #print('Extern: Speed: {} Gbit/s'.format(data_size/1024/1024/1024*8 / transfer_t))
