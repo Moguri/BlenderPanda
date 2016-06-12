@@ -7,7 +7,6 @@ import blenderpanda
 
 p3d.load_prc_file_data(
     '',
-    'model-path {}\n'.format(os.path.join(os.path.dirname(__file__), 'assets')) + \
     'framebuffer-srgb true\n'
 )
 
