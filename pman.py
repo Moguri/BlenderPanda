@@ -142,10 +142,9 @@ def create_project(projectdir):
     dirs = [
         'assets',
         'game',
-        'game/blenderpanda',
     ]
 
-    copy_files = [
+    bpanda_mod_files = [
         os.path.join(templatedir, '__init__.py'),
         os.path.join(templatedir, 'bpbase.py'),
         'rendermanager.py',
@@ -174,17 +173,21 @@ def create_project(projectdir):
             f.write(main_data)
         print("\tmain.py created at {}".format(mainpath))
 
-    print("Creating blenderpanda module")
-    for cf in copy_files:
+   
+    bpmodpath = os.path.join(projectdir, 'game/blenderpanda')
+    if os.path.exists(bpmodpath):
+        print("Updating blenderpanda module")
+        shutil.rmtree(bpmodpath)
+    else:
+        print("Creating blenderpanda module")
+    os.mkdir(bpmodpath)
+    for cf in bpanda_mod_files:
         bname = os.path.basename(cf)
         print("\tCopying over {}".format(bname))
         cfsrc = os.path.join(os.path.dirname(__file__), cf)
         cfdst = os.path.join(projectdir, 'game', 'blenderpanda', bname)
-        if os.path.exists(cfdst):
-            print("\t\t{} already exists at {}".format(bname, cfdst))
-        else:
-            shutil.copy(cfsrc, cfdst)
-            print("\t\t{} created at {}".format(bname, cfdst))
+        shutil.copy(cfsrc, cfdst)
+        print("\t\t{} created at {}".format(bname, cfdst))
 
 
 def get_abs_path(config, path):
