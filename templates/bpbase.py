@@ -9,6 +9,6 @@ class BPBase:
 
 def init(base):
     config = pman.get_config()
-    if config.getboolean('run', 'auto_build'):
+    if base.appRunner is None and config.getboolean('run', 'auto_build'):
         pman.build(config)
     base._bpbase = BPBase(base, config)
