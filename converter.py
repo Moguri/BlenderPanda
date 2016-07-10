@@ -140,7 +140,6 @@ class Converter():
                         np.attach_new_node(phynode)
                         if phy['dynamic']:
                             phynode.set_mass(phy['mass'])
-                        self.physics_world.attach(phynode)
                     else:
                         print("Could not create collision shape for object ({})".format(nodeid))
 
