@@ -5,6 +5,7 @@ import base64
 import struct
 
 from panda3d.core import *
+from panda3d import bullet
 
 class Converter():
     def __init__(self):
@@ -95,6 +96,54 @@ class Converter():
                     lnp = np.attach_new_node(light)
                     if isinstance(light, Light):
                         root.set_light(lnp)
+            if 'extensions' in gltf_node:
+                if 'BLENDER_physics' in gltf_node['extensions']:
+                    phy = gltf_node['extensions']['BLENDER_physics']
+                    shape = None
+                    radius = max(phy['dimensions'][0], phy['dimensions'][1]) / 2.0
+                    height = phy['dimensions'][2]
+                    geomnode = None
+                    if 'mesh' in phy:
+                        try:
+                            geomnode = self.meshes[phy['mesh']]
+                        except KeyError:
+                            print("Could not find physics mesh ({}) for object ({})".format(phy['mesh'], nodeid))
+
+                    if phy['collision_shape'] == 'box':
+                        shape = bullet.BulletBoxShape(LVector3(*phy['dimensions']) / 2.0)
+                    elif phy['collision_shape'] == 'sphere':
+                        shape = bullet.BulletSphereShape(max(phy['dimensions']) / 2.0)
+                    elif phy['collision_shape'] == 'capsule':
+                        shape = bullet.BulletCapsuleShape(radius, height - 2.0 * radius, bullet.ZUp)
+                    elif phy['collision_shape'] == 'cylinder':
+                        shape = bullet.BulletCylinderShape(radius, height, bullet.ZUp)
+                    elif phy['collision_shape'] == 'cone':
+                        shape = bullet.BulletConeShape(radius, height, bullet.ZUp)
+                    elif phy['collision_shape'] == 'convex_hull':
+                        if geomnode:
+                            shape = bullet.BulletConvexHullShape()
+
+                            for geom in geomnode.get_geoms():
+                                shape.add_geom(geom)
+                    elif phy['collision_shape'] == 'mesh':
+                        if geomnode:
+                            mesh = bullet.BulletTriangleMesh()
+                            for geom in geomnode.get_geoms():
+                                mesh.add_geom(geom)
+                            shape = bullet.BulletTriangleMeshShape(mesh, dynamic=phy['dynamic'])
+                    else:
+                        print("Unknown collision shape ({}) for object ({})".format(phy['collision_shape'], nodeid))
+
+                    if shape is not None:
+                        phynode = bullet.BulletRigidBodyNode(gltf_node['name'])
+                        phynode.add_shape(shape)
+                        np.attach_new_node(phynode)
+                        if phy['dynamic']:
+                            phynode.set_mass(phy['mass'])
+                        self.physics_world.attach(phynode)
+                    else:
+                        print("Could not create collision shape for object ({})".format(nodeid))
+
 
             for child_nodeid in gltf_node['children']:
                 add_node(np, gltf_scene, child_nodeid)
