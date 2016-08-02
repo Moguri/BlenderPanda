@@ -7,6 +7,7 @@ import struct
 import sys
 import time
 import threading
+import atexit
 
 try:
     import queue
@@ -53,6 +54,8 @@ class Server(threading.Thread):
         self.data_handler = data_handler
         self.update_handler = update_handler
 
+        atexit.register(self.destroy)
+
     def destroy(self):
         if self.socket:
             self.socket.shutdown(socket.SHUT_RDWR)
@@ -62,14 +65,11 @@ class Server(threading.Thread):
     def run(self):
         while True:
             msg_header = self.socket.recv(2)
-            try:
-                msg_id = struct.unpack('=H', msg_header)[0]
-            except struct.error as e:
-                if (len(msg_header) == 0):
-                    print("Received zero-length msg header, aborting")
-                    break
-                else:
-                    raise e
+            if len(msg_header) == 0:
+                print("Received zero-length msg header, aborting")
+                break
+
+            msg_id = struct.unpack('=H', msg_header)[0]
             if msg_id == 0:
                 data_size = struct.unpack('=I', self.socket.recv(4))[0]
                 data = bytearray(data_size)
@@ -181,8 +181,6 @@ class App(ShowBase):
             def server_mon(task):
                 if not self.server.is_alive():
                     print('Server thread has terminated, closing program')
-                    self.server.destroy()
-                    time.sleep(0.1)
                     sys.exit()
                 return task.cont
             self.taskMgr.add(server_mon, 'Server Monitor')
