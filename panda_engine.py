@@ -14,8 +14,6 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
     bl_idname = 'PANDA'
     bl_label = 'Panda 3D'
 
-    _processor = None
-
     def __init__(self):
         try:
             config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
@@ -29,4 +27,8 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
             processor=ExternalProcessor(args),
             use_bgr_texture=True
         )
+
+    @classmethod
+    def launch_game(cls):
+        bpy.ops.panda_engine.run_project()
 
