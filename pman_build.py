@@ -3,6 +3,10 @@ import os
 import shutil
 
 import bpy
+import addon_utils
+
+# Make sure BlenderPanda addon is enabled
+addon_utils.enable("BlenderPanda", persistent=True)
 
 #print(sys.argv)
 srcdir, dstdir = sys.argv[-2:]
