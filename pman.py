@@ -40,6 +40,7 @@ _config_defaults = OrderedDict([
     ('run', OrderedDict([
         ('main_file', 'game/main.py'),
         ('auto_build', True),
+        ('auto_save', True),
     ])),
 ])
 

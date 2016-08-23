@@ -83,6 +83,13 @@ class PandaProjectSettings(bpy.types.PropertyGroup):
             set=set_conf_prop('build', 'export_dir', ConfTypes.path),
         )
 
+        cls.auto_save = bpy.props.BoolProperty(
+            name="Auto Save",
+            description="Automatically save current blend file when running the project",
+            get=get_conf_prop('run', 'auto_save', ConfTypes.boolean),
+            set=set_conf_prop('run', 'auto_save'),
+        )
+
         cls.auto_build = bpy.props.BoolProperty(
             name="Auto Build",
             description="Automatically build the project when running",

@@ -194,6 +194,8 @@ class RunProject(bpy.types.Operator):
     def execute(self, context):
         try:
             config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            if config['run']['auto_save']:
+                bpy.ops.wm.save_mainfile()
             pman.run(config)
             return {'FINISHED'}
         except pman.PManException as e:

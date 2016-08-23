@@ -83,6 +83,7 @@ class PandaRender_PT_run(PandaButtonsPanel, bpy.types.Panel):
         layout = self.layout
         project_settings = context.scene.panda_project
 
+        layout.prop(project_settings, 'auto_save')
         layout.prop(project_settings, 'auto_build')
         layout.operator(operators.RunProject.bl_idname)
 
