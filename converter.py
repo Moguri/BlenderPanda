@@ -69,13 +69,9 @@ class Converter():
                     panda_node = panda_node.make_copy()
             np = root.attach_new_node(panda_node)
 
-            # Check if we need to deal with negative scale values
-            scale = panda_node.get_transform().get_scale()
-            if (scale.x * scale.y * scale.z < 0):
-                np.set_attrib(CullFaceAttrib.make_reverse())
-
             if 'meshes' in gltf_node:
                 np_tmp = np
+
                 if 'skeletons' in gltf_node:
                     char = self.characters[nodeid]
                     np_tmp = np.attach_new_node(char)
@@ -162,6 +158,15 @@ class Converter():
                 else:
                     #print('Showing', np)
                     visible_recursive(np, True)
+
+            # Check if we need to deal with negative scale values
+            scale = panda_node.get_transform().get_scale()
+            negscale = scale.x * scale.y * scale.z < 0
+            if (negscale):
+                for geomnode in np.find_all_matches('**/+GeomNode'):
+                    tmp = geomnode.get_parent().attach_new_node(PandaNode('ReverseCulling'))
+                    tmp.set_attrib(CullFaceAttrib.make_reverse())
+                    geomnode.reparent_to(tmp)
 
         for scenename, gltf_scene in gltf_data.get('scenes', {}).items():
             scene_root = NodePath(ModelRoot(scenename))
