@@ -216,7 +216,7 @@ class App(ShowBase):
         # First try to create a 24bit buffer to minimize copy times
         fbprops = p3d.FrameBufferProperties()
         fbprops.set_srgb_color(True)
-        fbprops.set_rgba(8, 8, 8, 0)
+        fbprops.set_rgba_bits(8, 8, 8, 0)
         wp = p3d.WindowProperties.size(sx, sy)
         flags = p3d.GraphicsPipe.BF_refuse_window
         #flags = p3d.GraphicsPipe.BF_require_window
@@ -231,7 +231,7 @@ class App(ShowBase):
 
         if self.win is None:
             # Try again with an alpha channel this time (32bit buffer)
-            fbprops.set_rgba(8, 8, 8, 8)
+            fbprops.set_rgba_bits(8, 8, 8, 8)
             self.win = self.graphicsEngine.make_output(
                     self.pipe,
                     'window',
