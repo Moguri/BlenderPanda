@@ -15,6 +15,7 @@ def init(base):
 
     # Add export directory to model path
     exportdir = pman.get_abs_path(config, config.get('build', 'export_dir'))
+    exportdir = p3d.Filename.from_os_specific(exportdir)
     p3d.get_model_path().prepend_directory(exportdir)
 
     base._bpbase = BPBase(base, config)
