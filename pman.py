@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import shutil
 import subprocess
@@ -35,7 +36,7 @@ _config_defaults = OrderedDict([
     ('build', OrderedDict([
         ('asset_dir', 'assets/'),
         ('export_dir', 'game/assets/'),
-        ('ignore_exts', 'blend1, blend2'),
+        ('ignore_patterns', '*.blend1, *.blend2'),
     ])),
     ('run', OrderedDict([
         ('main_file', 'game/main.py'),
@@ -225,8 +226,8 @@ def build(config=None):
     print("Read assets from: {}".format(srcdir))
     print("Export them to: {}".format(dstdir))
 
-    ignore_exts = [i.strip() for i in config.get('build', 'ignore_exts').split(',')]
-    print("Ignoring extensions: {}".format(ignore_exts))
+    ignore_patterns = [i.strip() for i in config.get('build', 'ignore_patterns').split(',')]
+    print("Ignoring file patterns: {}".format(ignore_patterns))
 
     num_blends = 0
     for root, dirs, files in os.walk(srcdir):
@@ -234,13 +235,13 @@ def build(config=None):
             src = os.path.join(root, asset)
             dst = src.replace(srcdir, dstdir)
 
-            iext = None
-            for ext in ignore_exts:
-                if asset.endswith(ext):
-                    iext = ext
+            ignore_pattern = None
+            for pattern in ignore_patterns:
+                if fnmatch.fnmatch(asset, pattern):
+                    ignore_pattern = pattern
                     break
-            if iext is not None:
-                print('Skip building file with ignored extension ({}): {}'.format(iext, dst))
+            if ignore_pattern is not None:
+                print('Skip building file {} that matched ignore pattern {}'.format(asset, ignore_pattern))
                 continue
 
             if asset.endswith('.blend'):
