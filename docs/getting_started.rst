@@ -113,10 +113,6 @@ When BlenderPanda detects a project, the render properties are updated:
 
 .. image:: images/project_settings.png
 
-Using an Existing Project
-^^^^^^^^^^^^^^^^^^^^^^^^^
-TODO
-
 Building and Running the Project
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The project can be run via the main.py as any normal Panda3D application or the Run Project button in the render properties in Blender.
