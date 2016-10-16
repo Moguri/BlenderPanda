@@ -7,7 +7,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
-    "support": 'TESTING',
+    "support": "COMMUNITY",
     "category": "Render"}
 
 
