@@ -54,10 +54,6 @@ Depending on the size of the Blender scene, it may take some time to convert to 
 
 Setting up a Project
 --------------------
-.. note::
-	The goal of this section is to discuss just enough about managing a project to get you going with BlenderPanda.
-	You can find more information on managing a project in BlenderPanda in the :doc:`Project Mangement documentation <project_management>`.
-
 While some features such as viewport previewing and BAM export are possible without a project, to make full use of BlenderPanda you'll need to set one up.
 
 Your two options are to:
