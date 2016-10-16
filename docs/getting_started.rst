@@ -102,7 +102,7 @@ A quick explanation of some of the files:
 
 *game/main.py*
 	This is the entry point of your Panda3D application.
-	You can do whatever you want with this file, but for the best experience, you should keep the model path changes and the ``blenderpanda`` instantiation.
+	You can do whatever you want with this file, but for the best experience, you should keep the ``blenderpanda`` initialization.
 
 *game/assets*
 	While not initially created, this is the default export directory.
@@ -130,4 +130,14 @@ This includes running the game from within Blender via BlenderPanda or running `
 The build process is very quick if no assets need to be converted, so auto-building should not hurt iteration times when programming.
 However, auto-build is very useful when pulling in new/modified source assets from a version control system.
 Therefore, it is recommended to leave auto-building enabled.
+
+When running a project with no changes made to the initial ``main.py`` created by BlenderPanda, you will be greeted by a window with a boring gray background.
+This is because there are no models being loaded in the ``main.py``.
+After creating and saving a model to the projects assets directory, it can be loaded by adding the following to ``GameApp.__init__`` in ``main.py`` somewhere after the ``blenderpanda.init(self)``::
+
+    self.model = self.loader.load_model('name_of_model_file.bam')
+    self.model.reparent_to(self.render)
+
+By default, the camera for the Panda3D scene will be at the origin, so it is likely that the loaded model will not be visible.
+For information on controlling the camera in Panda3D, please refer to the `Controlling the Camera <https://www.panda3d.org/manual/index.php/Controlling_the_Camera>`_ section of the `Panda3D Manual <https://www.panda3d.org/manual/index.php/Main_Page>`_.
 
