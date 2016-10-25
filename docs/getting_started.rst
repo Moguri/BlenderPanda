@@ -131,6 +131,11 @@ When running a project with no changes made to the initial ``main.py`` created b
 This is because there are no models being loaded in the ``main.py``.
 After creating and saving a model to the projects assets directory, it can be loaded by adding the following to ``GameApp.__init__`` in ``main.py`` somewhere after the ``blenderpanda.init(self)``::
 
+    self.model = self.loader.loadModel('name_of_model_file.bam')
+    self.model.reparentTo(self.render)
+
+Projects using newer versions of Panda3D (e.g., 1.10 and newer) may want to use the new API style::
+
     self.model = self.loader.load_model('name_of_model_file.bam')
     self.model.reparent_to(self.render)
 
