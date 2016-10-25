@@ -33,11 +33,16 @@ else:
     from . import properties
     from . import rendermanager
 
+@bpy.app.handlers.persistent
+def load_handler(_):
+    operators.update_blender_path()
+
 def register():
     bpy.utils.register_module(__name__)
     ui.register()
     operators.register()
     properties.register()
+    bpy.app.handlers.load_post.append(load_handler)
 
 
 def unregister():
@@ -45,3 +50,4 @@ def unregister():
     ui.unregister()
     operators.unregister()
     properties.unregister()
+    bpy.app.handlers.load_post.remove(load_handler)

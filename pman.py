@@ -45,6 +45,13 @@ _config_defaults = OrderedDict([
     ])),
 ])
 
+_user_config_defaults = OrderedDict([
+    ('blender', OrderedDict([
+        ('last_path', 'blender'),
+        ('use_last_path', True),
+    ])),
+])
+
 
 def __py2_read_dict(config, d):
     for section, options in d.items():
@@ -53,8 +60,7 @@ def __py2_read_dict(config, d):
         for option, value in options.items():
             config.set(section, option, value)
 
-
-def get_config(startdir=None):
+def _get_config(startdir, conf_name, defaults):
     try:
         if startdir is None:
             startdir = os.getcwd()
@@ -66,13 +72,13 @@ def get_config(startdir=None):
 
     while dirs:
         cdir = os.sep.join(dirs)
-        if cdir.strip() and '.pman' in os.listdir(cdir):
-            configpath = os.path.join(cdir, '.pman')
+        if cdir.strip() and conf_name in os.listdir(cdir):
+            configpath = os.path.join(cdir, conf_name)
             config = configparser.ConfigParser()
             if hasattr(config, 'read_dict'):
-                config.read_dict(_config_defaults)
+                config.read_dict(defaults)
             else:
-                __py2_read_dict(config, _config_defaults)
+                __py2_read_dict(config, defaults)
             config.read(configpath)
 
             config.add_section('internal')
@@ -83,6 +89,41 @@ def get_config(startdir=None):
 
     # No config found
     raise NoConfigError("Could not find config file")
+
+
+def get_config(startdir=None):
+    return _get_config(startdir, '.pman',  _config_defaults)
+
+
+def get_user_config(startdir=None):
+    try:
+        return _get_config(startdir, '.pman.user', _user_config_defaults)
+    except NoConfigError:
+        # No user config, just create one
+        config = get_config(startdir)
+        fp = os.path.join(config.get('internal', 'projectdir'), '.pman.user')
+        print("Creating user config at {}".format(fp))
+        with open(fp, 'w') as f:
+            pass
+
+        return _get_config(startdir, '.pman.user', _user_config_defaults)
+
+
+def _write_config(config, conf_name):
+    writecfg = configparser.ConfigParser()
+    writecfg.read_dict(config)
+    writecfg.remove_section('internal')
+
+    with open(os.path.join(config.get('internal', 'projectdir'), conf_name), 'w') as f:
+        writecfg.write(f)
+
+
+def write_config(config):
+    _write_config(config, '.pman')
+
+
+def write_user_config(user_config):
+    _write_config(user_config, '.pman.user')
 
 
 def get_python_program(config):
@@ -111,15 +152,6 @@ def get_python_program(config):
 
     # We couldn't find a python program to run
     raise CouldNotFindPythonError('Could not find a usable Python install')
-
-
-def write_config(config):
-    writecfg = configparser.ConfigParser()
-    writecfg.read_dict(config)
-    writecfg.remove_section('internal')
-
-    with open(os.path.join(config.get('internal', 'projectdir'), '.pman'), 'w') as f:
-        writecfg.write(f)
 
 
 def create_project(projectdir):
@@ -205,6 +237,7 @@ def get_rel_path(config, path):
 def build(config=None):
     if config is None:
         config = get_config()
+    user_config = get_user_config(config.get('internal', 'projectdir'))
 
     if hasattr(time, 'perf_counter'):
         stime = time.perf_counter()
@@ -260,8 +293,9 @@ def build(config=None):
                 shutil.copyfile(src, dst)
 
     if num_blends > 0:
+        blender_path = user_config.get('blender', 'last_path') if user_config.getboolean('blender', 'use_last_path') else 'blender'
         args = [
-            'blender',
+            blender_path,
             '-b',
             '-P',
             os.path.join(os.path.dirname(__file__), 'pman_build.py'),
@@ -269,6 +303,8 @@ def build(config=None):
             srcdir,
             dstdir,
         ]
+
+        #print("Calling blender: {}".format(' '.join(args)))
 
         subprocess.call(args, env=os.environ.copy())
 

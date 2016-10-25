@@ -12,6 +12,17 @@ from .brte.brte.converters import BTFConverter
 
 from . import pman
 
+
+def update_blender_path():
+    try:
+        startdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+        user_config = pman.get_user_config(startdir)
+        user_config['blender']['last_path'] = bpy.app.binary_path
+        pman.write_user_config(user_config)
+    except pman.NoConfigError:
+        pass
+
+
 class ExportBam(bpy.types.Operator, ExportHelper):
     """Export to Panda3D's BAM file format"""
     bl_idname = 'panda_engine.export_bam'
@@ -123,6 +134,8 @@ class CreateProject(bpy.types.Operator):
 
         if self.switch_dir:
             os.chdir(self.directory)
+
+        update_blender_path()
 
         return {'FINISHED'}
 

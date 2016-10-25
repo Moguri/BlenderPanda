@@ -31,4 +31,3 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
     @classmethod
     def launch_game(cls):
         bpy.ops.panda_engine.run_project()
-
