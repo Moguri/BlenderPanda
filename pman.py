@@ -86,29 +86,28 @@ def get_config(startdir=None):
 
 
 def get_python_program(config):
-    # Always use ppython on Windows
-    if sys.platform == 'win32':
-        return 'ppython'
+    python_programs = [
+        'ppython',
+        'python3',
+        'python',
+        'python2',
+    ]
 
     # Check to see if there is a version of Python that can import panda3d
-    args = [
-        'python3',
-        '-c',
-        'import panda3d.core; import direct',
-    ]
-    with open(os.devnull, 'w') as fp:
-        retcode = subprocess.call(args, stderr=fp)
+    for pyprog in python_programs:
+        args = [
+            pyprog,
+            '-c',
+            'import panda3d.core; import direct',
+        ]
+        with open(os.devnull, 'w') as fp:
+            try:
+                retcode = subprocess.call(args, stderr=fp)
+            except FileNotFoundError:
+                retcode = 1
 
-    if retcode == 0:
-        return 'python3'
-
-    # python3 didn't work, try python2
-    args[0] = 'python2'
-    with open(os.devnull, 'w') as fp:
-        retcode = subprocess.call(args, stderr=fp)
-
-    if retcode == 0:
-        return 'python2'
+        if retcode == 0:
+            return pyprog
 
     # We couldn't find a python program to run
     raise CouldNotFindPythonError('Could not find a usable Python install')
