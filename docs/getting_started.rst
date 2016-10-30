@@ -90,26 +90,27 @@ Assuming a directory called ``new_project`` was select, the following directory 
 A quick explanation of some of the files:
 
 *.pman*
-	An INI file that contains settings for your project.
-	This file in the root of your project directory is also how BlenderPanda detects a project.
-	BlenderPanda provides a GUI front-end to the settings in this file.
+    An INI file that contains settings for your project.
+    This file in the root of your project directory is also how BlenderPanda detects a project.
+    BlenderPanda provides a GUI front-end to the settings in this file.
 
 *assets*
-	The default directory to place source assets (e.g., blend files, images, etc.) to be converted.
-	The location of the assets directory can be modified in ``.pman``.
+    The default directory to place source assets (e.g., blend files, images, etc.) to be converted.
+    The location of the assets directory can be modified in ``.pman``.
+    **Files must be placed in this directory to be converted by BlenderPanda.**
 
 *game/blenderpanda*
-	A module that BlenderPanda uses to hook into your game code to provide features such as auto-building.
-	There should be no need to edit the files in this directory.
+    A module that BlenderPanda uses to hook into your game code to provide features such as auto-building.
+    There should be no need to edit the files in this directory.
 
 *game/main.py*
-	This is the entry point of your Panda3D application.
-	You can do whatever you want with this file, but for the best experience, you should keep the ``blenderpanda`` initialization.
+    This is the entry point of your Panda3D application.
+    You can do whatever you want with this file, but for the best experience, you should keep the ``blenderpanda`` initialization.
 
 *game/assets*
-	While not initially created, this is the default export directory.
-	When building a project, all converted/built files will be put here.
-	This directory is created automatically as part of the build step and should not be put under version control.
+    While not initially created, this is the default export directory.
+    When building a project, all converted/built files will be put here.
+    This directory is created automatically as part of the build step and should not be put under version control.
 
 When BlenderPanda detects a project, the render properties are updated:
 
@@ -131,7 +132,7 @@ Therefore, it is recommended to leave auto-building enabled.
 
 When running a project with no changes made to the initial ``main.py`` created by BlenderPanda, you will be greeted by a window with a boring gray background.
 This is because there are no models being loaded in the ``main.py``.
-After creating and saving a model to the projects assets directory, it can be loaded by adding the following to ``GameApp.__init__`` in ``main.py`` somewhere after the ``blenderpanda.init(self)``::
+After creating and saving a model to the project's assets directory, it can be loaded by adding the following to ``GameApp.__init__`` in ``main.py`` somewhere after the ``blenderpanda.init(self)``::
 
     self.model = self.loader.loadModel('name_of_model_file.bam')
     self.model.reparentTo(self.render)
