@@ -52,6 +52,8 @@ BlenderPanda is implemented as a Render Engine, so make sure it is selected from
 To preview a scene in Panda3D, simply switch to a rendered viewport.
 Depending on the size of the Blender scene, it may take some time to convert to Panda3D.
 
+.. note:: Rendered Viewport is not currently supported on macOS
+
 Setting up a Project
 --------------------
 While some features such as viewport previewing and BAM export are possible without a project, to make full use of BlenderPanda you'll need to set one up.
