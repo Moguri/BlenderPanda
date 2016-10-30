@@ -7,6 +7,7 @@ Contents:
    :maxdepth: 2
 
    getting_started
+   project_management
 
 
 Indices and tables
