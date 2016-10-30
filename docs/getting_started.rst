@@ -21,11 +21,18 @@ On Windows this will likely be the ``ppython.exe`` that ships with the Panda3D S
 
 Installing the Addon
 ^^^^^^^^^^^^^^^^^^^^
-
 After dependencies are downloaded and setup, it is time to install the addon itself.
+There are two ways to get the addon:
+
+* Grab the latest version with Git
+* Download a release build
+
+Using Git is recommended to quickly get new updates, but using a release build can be easier to install (especially for those not familiar with Git).
+
+Using Git
+"""""""""
 GitHub's Download ZIP option does not support git submodules, which are used by BlenderPanda to bring in the `BlenderRealtimeEngineAddon <https://github.com/Kupoman/BlenderRealtimeEngineAddon>`_.
-This makes `git <https://git-scm.com/>`_ the recommended way to grab the addon.
-In the future, packaged releases will be made that will not require git.
+Therefore `git <https://git-scm.com/>`_ the recommended way to grab the latest version of the addon.
 From the user addons directory (e.g., ~/.config/blender/2.xx/scripts/addons on Linux) use the following git command::
 
     git clone --recursive https://github.com/Moguri/BlenderPanda.git
@@ -45,6 +52,12 @@ This can happen if the ``--recursive`` option was not used.
 The following git command should bring in the missing submodule(s)::
 
     git submodule update --init --recursive
+
+Using a release build
+"""""""""""""""""""""
+Release builds can be found on the project's `Releases Page <https://github.com/Moguri/BlenderPanda/releases>`_.
+The Source Code builds will not contain submodules, so make sure you grab the file that starts with ``BlenderPanda-v``.
+Once you have the zip file, the addon can be installed like any Blender addon by following the instructions in the `Blender Manual <https://www.blender.org/manual/preferences/addons.html>`_.
 
 Viewport Preview
 ----------------
