@@ -12,8 +12,7 @@ except ImportError:
 
 
 class PManException(Exception):
-    def __init__(self, value):
-        self.value = value
+    pass
 
 
 class NoConfigError(PManException):
@@ -26,6 +25,18 @@ class CouldNotFindPythonError(PManException):
 
 class BuildError(PManException):
     pass
+
+
+class FrozenEnvironmentError(PManException):
+    def __init__(self):
+        PManException.__init__(self, "Operation not supported in frozen applications")
+
+
+if '__file__' not in globals():
+    __is_frozen = True
+    __file__ = ''
+else:
+    __is_frozen = False
 
 
 _config_defaults = OrderedDict([
@@ -126,6 +137,10 @@ def write_user_config(user_config):
     _write_config(user_config, '.pman.user')
 
 
+def is_frozen():
+    return __is_frozen
+
+
 def get_python_program(config):
     python_programs = [
         'ppython',
@@ -155,6 +170,9 @@ def get_python_program(config):
 
 
 def create_project(projectdir):
+    if is_frozen():
+        raise FrozenEnvironmentError()
+
     confpath = os.path.join(projectdir, '.pman')
     if os.path.exists(confpath):
         print("Updating project in {}".format(projectdir))
@@ -235,6 +253,9 @@ def get_rel_path(config, path):
 
 
 def build(config=None):
+    if is_frozen():
+        raise FrozenEnvironmentError()
+
     if config is None:
         config = get_config()
     user_config = get_user_config(config.get('internal', 'projectdir'))
@@ -316,6 +337,9 @@ def build(config=None):
 
 
 def run(config=None):
+    if is_frozen():
+        raise FrozenEnvironmentError()
+
     if config is None:
         config = get_config()
 

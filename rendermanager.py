@@ -8,7 +8,10 @@ except ImportError:
 try:
     import pman
 except ImportError:
-    from . import pman
+    try:
+        from . import pman
+    except ImportError:
+        import blenderpanda.pman as pman
 
 
 class BasicRenderManager:
