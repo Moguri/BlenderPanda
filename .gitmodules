@@ -1,3 +1,6 @@
 [submodule "brte"]
 	path = brte
 	url = https://github.com/Kupoman/BlenderRealtimeEngineAddon.git
+[submodule "blendergltf"]
+	path = blendergltf
+	url = https://github.com/Kupoman/blendergltf.git
