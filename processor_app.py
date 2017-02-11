@@ -57,10 +57,13 @@ class Server(threading.Thread):
         atexit.register(self.destroy)
 
     def destroy(self):
-        if self.socket:
-            self.socket.shutdown(socket.SHUT_RDWR)
-            self.socket.close()
-            self.socket = None
+        try:
+            if self.socket:
+                self.socket.shutdown(socket.SHUT_RDWR)
+                self.socket.close()
+        except OSError:
+            pass
+        self.socket = None
 
     def run(self):
         while True:

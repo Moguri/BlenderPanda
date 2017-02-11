@@ -50,7 +50,9 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         remove_delta = {}
         view_delta = {}
 
-        for collection in [getattr(bpy.data, i) for i in engine.DEFAULT_WATCHLIST]:
+        collections_list = engine.DEFAULT_WATCHLIST + ['actions']
+
+        for collection in [getattr(bpy.data, i) for i in collections_list]:
             collection_name = engine.get_collection_name(collection)
             collection_set = set(collection)
             add_delta[collection_name] = collection_set

@@ -29,8 +29,8 @@ class Converter():
         for camname, gltf_cam in gltf_data.get('cameras', {}).items():
             self.load_camera(camname, gltf_cam)
 
-        if 'extras' in gltf_data:
-            for lightname, gltf_light in gltf_data['extras'].get('lights', {}).items():
+        if 'extensions' in gltf_data and 'KHR_materials_common' in gltf_data['extensions']:
+            for lightname, gltf_light in gltf_data['extensions']['KHR_materials_common'].get('lights', {}).items():
                 self.load_light(lightname, gltf_light)
 
         for texname, gltf_tex in gltf_data.get('textures', {}).items():
@@ -83,15 +83,14 @@ class Converter():
                 camid = gltf_node['camera']
                 cam = self.cameras[camid]
                 np.attach_new_node(cam)
-            if 'extras' in gltf_node:
-                if 'light' in gltf_node['extras']:
-                    lightid = gltf_node['extras']['light']
-                    light = self.lights[lightid]
-                    if copy_lights:
-                        light = light.make_copy()
-                    lnp = np.attach_new_node(light)
-                    if isinstance(light, Light):
-                        root.set_light(lnp)
+            if 'extensions' in gltf_node and 'KHR_materials_common' in gltf_node['extensions']:
+                lightid = gltf_node['extensions']['KHR_materials_common']['light']
+                light = self.lights[lightid]
+                if copy_lights:
+                    light = light.make_copy()
+                lnp = np.attach_new_node(light)
+                if isinstance(light, Light):
+                    root.set_light(lnp)
             if 'extensions' in gltf_node:
                 if 'BLENDER_physics' in gltf_node['extensions']:
                     phy = gltf_node['extensions']['BLENDER_physics']
@@ -178,7 +177,8 @@ class Converter():
 
         # Set the active scene
         sceneid = gltf_data['scene']
-        self.active_scene = self.scenes[sceneid]
+        if sceneid in self.scenes:
+            self.active_scene = self.scenes[sceneid]
         if 'scenes' in gltf_data:
             gltf_scene = gltf_data['scenes'][sceneid]
             if 'extras' in gltf_scene:
@@ -218,37 +218,36 @@ class Converter():
             self.mat_mesh_map[matname] = []
 
         pmat = Material()
-        pmat.set_shininess(gltf_mat['values']['shininess'])
-       
-        diffuse = LColor(*gltf_mat['values']['diffuse'])
-        pmat.set_diffuse(diffuse)
+        textures = []
 
-        specular = LColor(*gltf_mat['values']['specular'])
-        pmat.set_specular(specular)
+        if 'extensions' in gltf_mat and 'KHR_materials_common' in gltf_mat['extensions']:
+            matext = gltf_mat['extensions']['KHR_materials_common']['values']
+            pmat.set_shininess(matext['shininess'])
 
-        ambient = LColor(*gltf_mat['values']['ambient'])
-        pmat.set_ambient(ambient)
+            if isinstance(matext['diffuse'], list):
+                diffuse = LColor(*matext['diffuse'])
+                pmat.set_diffuse(diffuse)
+            else:
+                textures.append(matext['diffuse'])
 
-        emission = LColor(*gltf_mat['values']['emission'])
-        pmat.set_emission(emission)
+            if isinstance(matext['specular'], list):
+                specular = LColor(*matext['specular'])
+                pmat.set_specular(specular)
+            else:
+                textures.append(matext['specular'])
 
-        #ambient = LColor(*mat['diffuse_color'], w=1)
-        #ambient *= mat['ambient']
-        #ambient.w = mat['alpha']
-        #pmat.set_ambient(ambient)
-        #pmat.set_ambient(diffuse)
+            if isinstance(matext['emission'], list):
+                emission = LColor(*matext['emission'])
+                pmat.set_emission(emission)
+            else:
+                textures.append(matext['emission'])
 
-        #emit = LColor(*mat['diffuse_color'], w=1)
-        #emit *= mat['emit']
-        #emit.w = mat['alpha']
-        #pmat.set_ambient(emit)
+            ambient = LColor(*matext['ambient'])
+            pmat.set_ambient(ambient)
 
         state = state.set_attrib(MaterialAttrib.make(pmat))
 
-        #if mat['use_transparency']:
-        #    state = state.set_attrib(TransparencyAttrib.make(TransparencyAttrib.M_alpha))
-
-        for i, tex in enumerate(gltf_mat['values']['textures']):
+        for i, tex in enumerate(textures):
             texdata = self.textures.get(tex, None)
             if texdata is None:
                 print("Could not find texture for key: {}".format(tex))
@@ -256,15 +255,10 @@ class Converter():
 
             tex_attrib = TextureAttrib.make()
             texstage = TextureStage(str(i))
-            texture_layer = gltf_mat['values']['uv_layers'][i]
-            if texture_layer:
-                texstage.set_texcoord_name(InternalName.get_texcoord_name(texture_layer))
-            else:
-                texstage.set_texcoord_name(InternalName.get_texcoord())
+            texstage.set_texcoord_name(InternalName.get_texcoord_name('0'))
 
             if texdata.get_num_components() == 4:
                 state = state.set_attrib(TransparencyAttrib.make(TransparencyAttrib.M_alpha))
-
 
             tex_attrib = tex_attrib.add_on_stage(texstage, texdata)
             state = state.set_attrib(tex_attrib)
@@ -399,10 +393,10 @@ class Converter():
 
         # convert animations
         #print("Looking for actions for", skel_name)
-        if 'extras' in gltf_data and 'actions' in gltf_data['extras']:
+        if 'extensions' in gltf_data and 'BLENDER_actions' in gltf_data['extensions']:
             anims = {
                 act_name.split('|')[-1]: act
-                for act_name, act in gltf_data['extras']['actions'].items()
+                for act_name, act in gltf_data['extensions']['BLENDER_actions']['actions'].items()
                 if act_name.startswith(skel_name)
             }
         else:
@@ -515,6 +509,8 @@ class Converter():
             iacc = gltf_data['accessors'][iacc_name]
 
             num_verts = iacc['count']
+            if iacc['componentType'] == 5123:
+                prim.set_index_type(GeomEnums.NTUint16)
             handle = prim.modify_vertices(num_verts).modify_handle()
             handle.unclean_set_num_rows(num_verts)
 
