@@ -26,27 +26,27 @@ class Converter():
 
     def update(self, gltf_data, writing_bam=False):
         # Convert data
-        for camname, gltf_cam in gltf_data.get('cameras', {}).items():
-            self.load_camera(camname, gltf_cam)
+        for camid, gltf_cam in gltf_data.get('cameras', {}).items():
+            self.load_camera(camid, gltf_cam)
 
         if 'extensions' in gltf_data and 'KHR_materials_common' in gltf_data['extensions']:
-            for lightname, gltf_light in gltf_data['extensions']['KHR_materials_common'].get('lights', {}).items():
-                self.load_light(lightname, gltf_light)
+            for lightid, gltf_light in gltf_data['extensions']['KHR_materials_common'].get('lights', {}).items():
+                self.load_light(lightid, gltf_light)
 
-        for texname, gltf_tex in gltf_data.get('textures', {}).items():
-            self.load_texture(texname, gltf_tex, gltf_data)
+        for texid, gltf_tex in gltf_data.get('textures', {}).items():
+            self.load_texture(texid, gltf_tex, gltf_data)
 
-        for matname, gltf_mat in gltf_data.get('materials', {}).items():
-            self.load_material(matname, gltf_mat)
+        for matid, gltf_mat in gltf_data.get('materials', {}).items():
+            self.load_material(matid, gltf_mat)
 
-        for meshname, gltf_mesh in gltf_data.get('meshes', {}).items():
-            self.load_mesh(meshname, gltf_mesh, gltf_data)
+        for meshid, gltf_mesh in gltf_data.get('meshes', {}).items():
+            self.load_mesh(meshid, gltf_mesh, gltf_data)
 
-        for nodename, gltf_node in gltf_data.get('nodes', {}).items():
-            node = self.nodes.get(nodename, PandaNode(nodename))
+        for nodeid, gltf_node in gltf_data.get('nodes', {}).items():
+            node = self.nodes.get(nodeid, PandaNode(gltf_node['name']))
             matrix = self.load_matrix(gltf_node['matrix'])
             node.set_transform(TransformState.make_mat(matrix))
-            self.nodes[nodename] = node
+            self.nodes[nodeid] = node
 
         # If we support writing bam 6.40, we can safely write out
         # instanced lights.  If not, we have to copy it.
@@ -167,13 +167,13 @@ class Converter():
                     tmp.set_attrib(CullFaceAttrib.make_reverse())
                     geomnode.reparent_to(tmp)
 
-        for scenename, gltf_scene in gltf_data.get('scenes', {}).items():
-            scene_root = NodePath(ModelRoot(scenename))
+        for sceneid, gltf_scene in gltf_data.get('scenes', {}).items():
+            scene_root = NodePath(ModelRoot(gltf_scene['name']))
 
             for nodeid in gltf_scene['nodes']:
                 add_node(scene_root, gltf_scene,  nodeid)
 
-            self.scenes[scenename] = scene_root
+            self.scenes[sceneid] = scene_root
 
         # Set the active scene
         sceneid = gltf_data['scene']
@@ -194,7 +194,7 @@ class Converter():
             lmat.set_row(i, LVecBase4(*mat[i * 4: i * 4 + 4]))
         return lmat
 
-    def load_texture(self, texname, gltf_tex, gltf_data):
+    def load_texture(self, texid, gltf_tex, gltf_data):
         source = gltf_data['images'][gltf_tex['source']]
         uri = Filename.fromOsSpecific(source['uri'])
         texture = TexturePool.load_texture(uri, 0, False, LoaderOptions())
@@ -209,13 +209,13 @@ class Converter():
                 texture.set_format(Texture.F_srgb)
             elif texture.get_num_components() == 4:
                 texture.set_format(Texture.F_srgb_alpha)
-        self.textures[texname] = texture
+        self.textures[texid] = texture
 
-    def load_material(self, matname, gltf_mat):
-        state = self.mat_states.get(matname, RenderState.make_empty())
+    def load_material(self, matid, gltf_mat):
+        state = self.mat_states.get(matid, RenderState.make_empty())
 
-        if matname not in self.mat_mesh_map:
-            self.mat_mesh_map[matname] = []
+        if matid not in self.mat_mesh_map:
+            self.mat_mesh_map[matid] = []
 
         pmat = Material()
         textures = []
@@ -264,15 +264,15 @@ class Converter():
             state = state.set_attrib(tex_attrib)
 
         # Remove stale meshes
-        self.mat_mesh_map[matname] = [
-            pair for pair in self.mat_mesh_map[matname] if pair[0] in self.meshes
+        self.mat_mesh_map[matid] = [
+            pair for pair in self.mat_mesh_map[matid] if pair[0] in self.meshes
         ]
 
         # Reload the material
-        for meshname, geom_idx in self.mat_mesh_map[matname]:
-            self.meshes[meshname].set_geom_state(geom_idx, state)
+        for meshid, geom_idx in self.mat_mesh_map[matid]:
+            self.meshes[meshid].set_geom_state(geom_idx, state)
 
-        self.mat_states[matname] = state
+        self.mat_states[matid] = state
 
     def create_anim(self, character, skel_name, root_bone, anim_name, gltf_action, gltf_data):
         if 'extras' in gltf_data['scenes'][gltf_data['scene']]:
@@ -411,8 +411,8 @@ class Converter():
         return character, jvtmap
 
 
-    def load_mesh(self, meshname,  gltf_mesh, gltf_data):
-        node = self.meshes.get(meshname, GeomNode(meshname))
+    def load_mesh(self, meshid,  gltf_mesh, gltf_data):
+        node = self.meshes.get(meshid, GeomNode(gltf_mesh['name']))
 
         # Clear any existing mesh data
         node.remove_all_geoms()
@@ -428,7 +428,7 @@ class Converter():
 
         if is_skinned:
             # Find all nodes that use this mesh and try to find a skin
-            gltf_nodes = [gltf_node for gltf_node in gltf_data['nodes'].values() if 'meshes' in gltf_node and meshname in gltf_node['meshes']]
+            gltf_nodes = [gltf_node for gltf_node in gltf_data['nodes'].values() if 'meshes' in gltf_node and meshid in gltf_node['meshes']]
             gltf_node = [gltf_node for gltf_node in gltf_nodes if 'skin' in gltf_node][0]
             gltf_skin = gltf_data['skins'][gltf_node['skin']]
             character, jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
@@ -536,16 +536,16 @@ class Converter():
             #print(ss.getData())
 
             # Get a material
-            matname = gltf_primitive['material']
-            if not matname:
-                print("Warning: mesh {} has a primitive with no material, using an empty RenderState".format(meshname))
+            matid = gltf_primitive['material']
+            if not matid:
+                print("Warning: mesh {} has a primitive with no material, using an empty RenderState".format(meshid))
                 mat = RenderState.make_empty()
-            elif matname not in self.mat_states:
-                print("Warning: material with name {} has no associated mat state, using an empty RenderState".format(matname))
+            elif matid not in self.mat_states:
+                print("Warning: material with name {} has no associated mat state, using an empty RenderState".format(matid))
                 mat = RenderState.make_empty()
             else:
                 mat = self.mat_states[gltf_primitive['material']]
-                self.mat_mesh_map[gltf_primitive['material']].append((meshname, geom_idx))
+                self.mat_mesh_map[gltf_primitive['material']].append((meshid, geom_idx))
 
             # Now put it together
             geom = Geom(vdata)
@@ -554,10 +554,10 @@ class Converter():
 
             geom_idx += 1
 
-        self.meshes[meshname] = node
+        self.meshes[meshid] = node
 
-    def load_camera(self, camname, gltf_camera):
-        node = self.cameras.get(camname, Camera(camname))
+    def load_camera(self, camid, gltf_camera):
+        node = self.cameras.get(camid, Camera(gltf_camera['name']))
 
         if gltf_camera['type'] == 'perspective':
             gltf_lens = gltf_camera['perspective']
@@ -567,10 +567,11 @@ class Converter():
             lens.set_view_vector((0, 0, -1), (0, 1, 0))
             node.set_lens(lens)
 
-        self.cameras[camname] = node
+        self.cameras[camid] = node
 
-    def load_light(self, lightname, gltf_light):
-        node = self.lights.get(lightname, None)
+    def load_light(self, lightid, gltf_light):
+        node = self.lights.get(lightid, None)
+        lightname = gltf_light['name']
 
         ltype = gltf_light['type']
         # Construct a new light if needed
@@ -604,7 +605,7 @@ class Converter():
             )
             node.set_attenuation(att)
 
-        self.lights[lightname] = node
+        self.lights[lightid] = node
 
 
 if __name__ == '__main__':
