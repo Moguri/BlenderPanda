@@ -220,6 +220,7 @@ class App(ShowBase):
         fbprops = p3d.FrameBufferProperties()
         fbprops.set_srgb_color(True)
         fbprops.set_rgba_bits(8, 8, 8, 0)
+        fbprops.set_depth_bits(24)
         wp = p3d.WindowProperties.size(sx, sy)
         flags = p3d.GraphicsPipe.BF_refuse_window
         #flags = p3d.GraphicsPipe.BF_require_window
