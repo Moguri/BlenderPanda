@@ -382,22 +382,56 @@ class Converter():
         skeleton = PartGroup(bundle, "<skeleton>")
         jvtmap = {}
 
-        def create_joint(parent, node):
-            #print("Creating joint for:", node['name'])
-            joint = CharacterJoint(character, bundle, parent, node['name'], self.load_matrix(node['matrix']))
+        bind_shape_mat = self.load_matrix(gltf_skin['bindShapeMatrix'])
+        bind_shape_mat.invert_in_place()
+        bind_mats = []
+        ibmacc = gltf_data['accessors'][gltf_skin['inverseBindMatrices']]
+        ibmbv = gltf_data['bufferViews'][ibmacc['bufferView']]
+        ibmbuff = gltf_data['buffers'][ibmbv['buffer']]
+        ibmdata = base64.b64decode(ibmbuff['uri'].split(',')[1])
+        ibmbuffstart = ibmbv['byteOffset']
+        for i in range(ibmacc['count']):
+            mat = struct.unpack_from('<{}'.format('f'*16), ibmdata, i * 16 * 4)
+            #print('loaded', mat)
+            #mat = bind_shape_mat * self.load_matrix(mat)
+            mat = self.load_matrix(mat)
+            mat.invert_in_place()
+            bind_mats.append(mat)
 
-            # Non-deforming bones are not in the skin's jointNames, don't add them to the jvtmap
+        def create_joint(parent, parent_node, node):
+            #print("Creating joint for:", node['name'])
+            joint_index = None
+            joint_mat = LMatrix4.ident_mat()
+            parent_mat = LMatrix4.ident_mat()
+            if parent_node is not None:
+                parent_mat = self.load_matrix(parent_node['matrix'])
+                parent_mat.invert_in_place()
+            else:
+                joint_mat = bind_shape_mat
             if node['jointName'] in gltf_skin['jointNames']:
                 joint_index = gltf_skin['jointNames'].index(node['jointName'])
-                jvtmap[gltf_skin['jointNames'].index(node['jointName'])] = JointVertexTransform(joint)
+                joint_mat = bind_mats[joint_index] * parent_mat
+
+            #print('joint mat', node['name'], joint_index)
+            #print(joint_mat)
+            #if joint_index is not None:
+            #    print(bind_mats[joint_index])
+            #else:
+            #    print(bind_shape_mat)
+
+            joint = CharacterJoint(character, bundle, parent, node['name'], joint_mat)
+
+            # Non-deforming bones are not in the skin's jointNames, don't add them to the jvtmap
+            if joint_index is not None:
+                jvtmap[joint_index] = JointVertexTransform(joint)
 
 
             for child in node['children']:
                 #print("Create joint for child", child)
                 bone_node = gltf_data['nodes'][child]
-                create_joint(joint, bone_node)
+                create_joint(joint, node, bone_node)
 
-        create_joint(skeleton, root)
+        create_joint(skeleton, None, root)
         #print("Adding skinned mesh to", nodeid)
         self.characters[nodeid] = character
 
