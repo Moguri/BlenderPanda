@@ -10,6 +10,8 @@ from bpy_extras.io_utils import ExportHelper
 from .brte.brte import engine
 from .brte.brte.converters import BTFConverter
 
+import blendergltf
+
 from . import pman
 
 
@@ -71,23 +73,19 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             self.report({'ERROR'}, e.value)
             return {'CANCELLED'}
 
-        blender_converter = BTFConverter()
-        data = blender_converter.convert(*self._collect_deltas())
-
-        # Copy images
-        if self.copy_images:
-            for img in data.get('images', {}).values():
-                if not img['uri']:
-                    continue
-                src = os.path.join(os.path.dirname(bpy.data.filepath), img['uri'])
-                src = os.path.abspath(src)
-                dst = os.path.join(os.path.dirname(self.filepath), os.path.basename(src))
-                dst = os.path.abspath(dst)
-
-                print('Copying image from "{}" to "{}"'.format(src, dst))
-                shutil.copyfile(src, dst)
-
-                img['uri'] = os.path.relpath(dst, os.path.dirname(self.filepath))
+        gltf_settings = {
+            'images_data_storage': 'COPY' if self.copy_images else 'REFERENCE',
+            'nodes_export_hidden': True,
+            'ext_export_physics': True,
+            'ext_export_actions': True,
+            'gltf_output_dir': os.path.dirname(self.filepath),
+        }
+        collections_list = engine.DEFAULT_WATCHLIST + ['actions']
+        scene_delta = {
+            cname: list(getattr(bpy.data, cname))
+            for cname in collections_list
+        }
+        data = blendergltf.export_gltf(scene_delta, gltf_settings)
 
         # Check if we need to convert the file
         try:
