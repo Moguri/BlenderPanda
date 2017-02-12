@@ -274,54 +274,66 @@ class Converter():
 
         self.mat_states[matid] = state
 
-    def create_anim(self, character, skel_name, root_bone, anim_name, gltf_action, gltf_data):
+    def create_anim(self, character, skel_name, anim_name, gltf_anim, gltf_data):
+        root_bone = gltf_data['nodes'][skel_name]
         if 'extras' in gltf_data['scenes'][gltf_data['scene']]:
             fps = gltf_data['scenes'][gltf_data['scene']].get('frames_per_second', 30)
         else:
             fps = 30
 
-        num_frames = gltf_action['frames']
+        # Blender exports the same number of elements in each time parameter, so find
+        # one and assume that the number of elements is the number of frames
+        num_frames = [
+            gltf_data['accessors'][accid]['count']
+            for param, accid in gltf_anim['parameters'].items()
+            if 'time_parameter' in param
+        ][0]
+
+        # Create a simpler samplers dict so we don't have to keep looking
+        # up parameters
+        samplers = {
+            samplerid: gltf_anim['parameters'][sampler['output']]
+            for samplerid, sampler in gltf_anim['samplers'].items()
+        }
 
         bundle = AnimBundle(character.get_name(), fps, num_frames)
         skeleton = AnimGroup(bundle, '<skeleton>')
 
-        def create_anim_channel(parent, bone):
-            channels = [chan for chan in gltf_action['channels'] if chan['id'] == '{}_{}'.format(skel_name, bone['name'])]
+        def create_anim_channel(parent, boneid):
+            bone = gltf_data['nodes'][boneid]
+            channels = [chan for chan in gltf_anim['channels'] if chan['target']['id'] == boneid]
 
             group = AnimChannelMatrixXfmTable(parent, bone['name'])
 
             def extract_chan_data(path):
                 vals = []
-                accs = [
-                    gltf_data['accessors'][chan['data']]
+                acc = [
+                    gltf_data['accessors'][samplers[chan['sampler']]]
                     for chan in channels
-                    if chan['path'] == path
-                ]
+                    if chan['target']['path'] == path
+                ][0]
 
-                if accs:
-                    acc = accs[0]
-                    bv = gltf_data['bufferViews'][acc['bufferView']]
-                    buff = gltf_data['buffers'][bv['buffer']]
-                    buff_data = base64.b64decode(buff['uri'].split(',')[1])
-                    start = bv['byteOffset']
-                    end = bv['byteOffset'] + bv['byteLength']
+                bv = gltf_data['bufferViews'][acc['bufferView']]
+                buff = gltf_data['buffers'][bv['buffer']]
+                buff_data = base64.b64decode(buff['uri'].split(',')[1])
+                start = bv['byteOffset']
+                end = bv['byteOffset'] + bv['byteLength']
 
-
-                    if path == 'rotation':
-                        data = [struct.unpack_from('<ffff', buff_data, idx) for idx in range(start, end, 4 * 4)]
-                        vals += [
-                            [i[0] for i in data],
-                            [i[1] for i in data],
-                            [i[2] for i in data],
-                            [i[3] for i in data]
-                        ]
-                    else:
-                        data = [struct.unpack_from('<fff', buff_data, idx) for idx in range(start, end, 3 * 4)]
-                        vals += [
-                            [i[0] for i in data],
-                            [i[1] for i in data],
-                            [i[2] for i in data]
-                        ]
+                if path == 'rotation':
+                    data = [struct.unpack_from('<ffff', buff_data, idx) for idx in range(start, end, 4 * 4)]
+                    vals += [
+                        [i[0] for i in data],
+                        [i[1] for i in data],
+                        [i[2] for i in data],
+                        [i[3] for i in data]
+                    ]
+                else:
+                    data = [struct.unpack_from('<fff', buff_data, idx) for idx in range(start, end, 3 * 4)]
+                    vals += [
+                        [i[0] for i in data],
+                        [i[1] for i in data],
+                        [i[2] for i in data]
+                    ]
 
                 return vals
 
@@ -339,7 +351,7 @@ class Converter():
                 tablep = PTAFloat.empty_array(num_frames)
                 tabler = PTAFloat.empty_array(num_frames)
                 for i in range(num_frames):
-                    quat = LQuaternion(rot_vals[0][i], rot_vals[1][i], rot_vals[2][i], rot_vals[3][i])
+                    quat = LQuaternion(rot_vals[3][i], rot_vals[0][i], rot_vals[1][i], rot_vals[2][i])
                     hpr = quat.get_hpr()
                     tableh.set_element(i, hpr.get_x())
                     tablep.set_element(i, hpr.get_y())
@@ -354,15 +366,13 @@ class Converter():
                 group.set_table(b'k', CPTAFloat(PTAFloat(scale_vals[2])))
 
 
-            for child in bone['children']:
-                create_anim_channel(group, gltf_data['nodes'][child])
+            for childid in bone['children']:
+                create_anim_channel(group, childid)
 
-        create_anim_channel(skeleton, root_bone)
+        create_anim_channel(skeleton, skel_name)
         character.add_child(AnimBundleNode(root_bone['name'], bundle))
 
-
-    def create_character(self, gltf_node, gltf_skin, gltf_mesh, gltf_data):
-        nodeid = gltf_node['name']
+    def create_character(self, nodeid, gltf_node, gltf_skin, gltf_mesh, gltf_data):
         #print("Creating skinned mesh for", gltf_mesh['name'])
         skel_name = gltf_node['skeletons'][0]
         root = gltf_data['nodes'][skel_name]
@@ -393,20 +403,18 @@ class Converter():
 
         # convert animations
         #print("Looking for actions for", skel_name)
-        if 'extensions' in gltf_data and 'BLENDER_actions' in gltf_data['extensions']:
-            anims = {
-                act_name.split('|')[-1]: act
-                for act_name, act in gltf_data['extensions']['BLENDER_actions']['actions'].items()
-                if act_name.startswith(skel_name)
-            }
-        else:
-            anims = {}
+        clean_skel_name = skel_name.replace('node_', '')
+        anims = {
+            anim_name.split('|')[-1]: anim
+            for anim_name, anim in gltf_data['animations'].items()
+            if anim_name.startswith(clean_skel_name)
+        }
 
         if anims:
             #print("Found anims for", nodeid)
-            for anim, gltf_action in anims.items():
+            for anim, gltf_anim in anims.items():
                 #print("\t", anim)
-                self.create_anim(character, skel_name, root, anim, gltf_action, gltf_data)
+                self.create_anim(character, skel_name, anim, gltf_anim, gltf_data)
 
         return character, jvtmap
 
@@ -428,10 +436,10 @@ class Converter():
 
         if is_skinned:
             # Find all nodes that use this mesh and try to find a skin
-            gltf_nodes = [gltf_node for gltf_node in gltf_data['nodes'].values() if 'meshes' in gltf_node and meshid in gltf_node['meshes']]
-            gltf_node = [gltf_node for gltf_node in gltf_nodes if 'skin' in gltf_node][0]
+            gltf_nodes = {nodeid:gltf_node for nodeid,gltf_node in gltf_data['nodes'].items() if 'meshes' in gltf_node and meshid in gltf_node['meshes']}
+            nodeid, gltf_node = [(nodeid, gltf_node) for nodeid, gltf_node in gltf_nodes.items() if 'skin' in gltf_node][0]
             gltf_skin = gltf_data['skins'][gltf_node['skin']]
-            character, jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
+            character, jvtmap = self.create_character(nodeid, gltf_node, gltf_skin, gltf_mesh, gltf_data)
             tb_va = GeomVertexArrayFormat()
             tb_va.add_column(InternalName.get_transform_blend(), 1, GeomEnums.NTUint16, GeomEnums.CIndex)
             tbtable = TransformBlendTable()
