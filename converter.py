@@ -544,8 +544,8 @@ class Converter():
             #print(ss.getData())
 
             # Get a material
-            matid = gltf_primitive['material']
-            if not matid:
+            matid = gltf_primitive.get('material', None)
+            if matid is None:
                 print("Warning: mesh {} has a primitive with no material, using an empty RenderState".format(meshid))
                 mat = RenderState.make_empty()
             elif matid not in self.mat_states:
