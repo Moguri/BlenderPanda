@@ -457,8 +457,8 @@ class Converter():
 
         # Describe the vertex data
         va = GeomVertexArrayFormat()
-        va.add_column(InternalName.get_vertex(), 3, GeomEnums.NTFloat32, GeomEnums.CPoint)
-        va.add_column(InternalName.get_normal(), 3, GeomEnums.NTFloat32, GeomEnums.CPoint)
+        va.add_column(InternalName.get_vertex(), 3, GeomEnums.NT_float32, GeomEnums.C_point)
+        va.add_column(InternalName.get_normal(), 3, GeomEnums.NT_float32, GeomEnums.C_normal)
 
         if is_skinned:
             # Find all nodes that use this mesh and try to find a skin
