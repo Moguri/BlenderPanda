@@ -50,4 +50,5 @@ def unregister():
     ui.unregister()
     operators.unregister()
     properties.unregister()
-    bpy.app.handlers.load_post.remove(load_handler)
+    if load_handler in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(load_handler)
