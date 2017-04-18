@@ -122,6 +122,7 @@ class App(ShowBase):
         self.bg = p3d.LVecBase4(0.0, 0.0, 0.0, 1.0)
 
         p3d.get_model_path().prepend_directory(workingdir)
+        self.workingdir = workingdir
 
         self.texture = p3d.Texture()
         self.win = None
@@ -193,9 +194,9 @@ class App(ShowBase):
                 return task.cont
             self.taskMgr.add(server_task, 'Server Communication')
 
-
+    def update_rman(self):
         try:
-            pman_conf = pman.get_config(workingdir)
+            pman_conf = pman.get_config(self.workingdir)
         except pman.NoConfigError:
             pman_conf = None
 
@@ -218,7 +219,6 @@ class App(ShowBase):
 
         # First try to create a 24bit buffer to minimize copy times
         fbprops = p3d.FrameBufferProperties()
-        fbprops.set_srgb_color(True)
         fbprops.set_rgba_bits(8, 8, 8, 0)
         fbprops.set_depth_bits(24)
         wp = p3d.WindowProperties.size(sx, sy)
@@ -261,8 +261,11 @@ class App(ShowBase):
 
         self.setFrameRateMeter(use_frame_rate_meter)
 
+        self.update_rman()
+
         self.texture = p3d.Texture()
         self.win.addRenderTexture(self.texture, p3d.GraphicsOutput.RTM_copy_ram)
+
 
     def handle_data(self, data):
         self.conversion_queue.put(data)
