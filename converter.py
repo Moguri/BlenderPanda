@@ -5,7 +5,12 @@ import base64
 import struct
 
 from panda3d.core import *
-from panda3d import bullet
+try:
+    from panda3d import bullet
+    HAVE_BULLET = True
+except ImportError:
+    HAVE_BULLET = False
+
 
 class Converter():
     def __init__(self):
@@ -92,7 +97,7 @@ class Converter():
                 if isinstance(light, Light):
                     root.set_light(lnp)
             if 'extensions' in gltf_node:
-                if 'BLENDER_physics' in gltf_node['extensions']:
+                if HAVE_BULLET and 'BLENDER_physics' in gltf_node['extensions']:
                     phy = gltf_node['extensions']['BLENDER_physics']
                     shape = None
                     radius = max(phy['dimensions'][0], phy['dimensions'][1]) / 2.0
@@ -138,6 +143,8 @@ class Converter():
                             phynode.set_mass(phy['mass'])
                     else:
                         print("Could not create collision shape for object ({})".format(nodeid))
+                elif not HAVE_BULLET:
+                    print("Bullet is unavailable, not converting collision shape for object ({})".format(nodeid))
 
 
             for child_nodeid in gltf_node['children']:
