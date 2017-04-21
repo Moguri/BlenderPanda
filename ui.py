@@ -204,6 +204,24 @@ class PandaCamera_PT_lens(PandaButtonsPanel, bpy.types.Panel):
         else:
             layout.label("Not supported")
 
+
+class PandaPhysics_PT_add(PandaButtonsPanel, bpy.types.Panel):
+    bl_label = ""
+    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(self, context):
+        return PandaButtonsPanel.poll(context) and context.object
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+
+        if obj.rigid_body:
+            layout.operator('rigidbody.object_remove', text="Remove Rigid Body Physics")
+        else:
+            layout.operator('rigidbody.object_add', text="Add Rigid Body Physics")
+
 def get_panels():
     panels = [
         "DATA_PT_camera_display",
@@ -228,6 +246,8 @@ def get_panels():
         "TEXTURE_PT_image_mapping",
         "TEXTURE_PT_mapping",
         "TEXTURE_PT_influence",
+        "PHYSICS_PT_rigid_body",
+        "PHYSICS_PT_rigid_body_collisions",
     ]
 
     return [getattr(bpy.types, p) for p in panels if hasattr(bpy.types, p)]
