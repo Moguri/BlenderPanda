@@ -146,6 +146,9 @@ class Converter():
                         print("Could not create collision shape for object ({})".format(nodeid))
                 elif not HAVE_BULLET:
                     print("Bullet is unavailable, not converting collision shape for object ({})".format(nodeid))
+            if 'extras' in gltf_node:
+                for key, value in gltf_node['extras'].items():
+                    np.set_tag(key, str(value))
 
 
             for child_nodeid in gltf_node['children']:
