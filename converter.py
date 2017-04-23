@@ -88,15 +88,16 @@ class Converter():
                 camid = gltf_node['camera']
                 cam = self.cameras[camid]
                 np.attach_new_node(cam)
-            if 'extensions' in gltf_node and 'KHR_materials_common' in gltf_node['extensions']:
-                lightid = gltf_node['extensions']['KHR_materials_common']['light']
-                light = self.lights[lightid]
-                if copy_lights:
-                    light = light.make_copy()
-                lnp = np.attach_new_node(light)
-                if isinstance(light, Light):
-                    root.set_light(lnp)
             if 'extensions' in gltf_node:
+                if 'KHR_materials_common' in gltf_node['extensions']:
+                    lightid = gltf_node['extensions']['KHR_materials_common']['light']
+                    light = self.lights[lightid]
+                    if copy_lights:
+                        light = light.make_copy()
+                    lnp = np.attach_new_node(light)
+                    if isinstance(light, Light):
+                        root.set_light(lnp)
+
                 if HAVE_BULLET and 'BLENDER_physics' in gltf_node['extensions']:
                     phy = gltf_node['extensions']['BLENDER_physics']
                     shape = None
