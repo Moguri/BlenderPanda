@@ -1,9 +1,5 @@
-try:
-    from importlib.machinery import SourceFileLoader
-    HAS_SFL = True
-except ImportError:
-    import imp
-    HAS_SFL = False
+import imp
+import os
 
 try:
     import pman
@@ -75,12 +71,30 @@ def create_render_manager(base, config=None):
     if not renderplugin:
         return BasicRenderManager(base)
 
-    path = pman.get_abs_path(config, renderplugin)
+    rppath = pman.get_abs_path(config, renderplugin)
+    maindir = os.path.dirname(pman.get_abs_path(config, config.get('run', 'main_file')))
+    rppath = os.path.splitext(os.path.relpath(rppath, maindir))[0]
+    module_parts = rppath.split(os.sep)
 
-    if HAS_SFL:
-        mod = SourceFileLoader("render_plugin", path).load_module()
+    def load_module(modname, modinfo):
+        mod = None
+        try:
+            mod = imp.load_module(modname, *modinfo)
+        finally:
+            if modinfo[0]:
+                modinfo[0].close()
+
+        return mod
+    if pman.is_frozen():
+        modname = '.'.join(module_parts)
+        modinfo = imp.find_module(modname)
+        mod = load_module(modname, modinfo)
     else:
-        mod = imp.load_source("render_plugin", path)
+        mod = None
+        for modname in module_parts:
+            modpath = None if mod is None else mod.__path__
+            modinfo = imp.find_module(modname, modpath)
+            mod = load_module(modname, modinfo)
 
     return mod.get_plugin()(base)
 
