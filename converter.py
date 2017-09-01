@@ -49,8 +49,6 @@ class Converter():
 
         for nodeid, gltf_node in gltf_data.get('nodes', {}).items():
             node = self.nodes.get(nodeid, PandaNode(gltf_node['name']))
-            matrix = self.load_matrix(gltf_node['matrix'])
-            node.set_transform(TransformState.make_mat(matrix))
             self.nodes[nodeid] = node
 
         # If we support writing bam 6.40, we can safely write out
@@ -73,6 +71,9 @@ class Converter():
                 if nodeid in gltf_scene['extras']['hidden_nodes']:
                     panda_node = panda_node.make_copy()
             np = root.attach_new_node(panda_node)
+            np.set_pos(*gltf_node['translation'])
+            np.set_hpr(self.load_quaternion_as_hpr(gltf_node['rotation']))
+            np.set_scale(*gltf_node['scale'])
 
             if 'meshes' in gltf_node:
                 np_tmp = np
@@ -209,6 +210,10 @@ class Converter():
         for i in range(4):
             lmat.set_row(i, LVecBase4(*mat[i * 4: i * 4 + 4]))
         return lmat
+
+    def load_quaternion_as_hpr(self, quaternion):
+        quat = LQuaternion(quaternion[3], quaternion[0], quaternion[1], quaternion[2])
+        return quat.get_hpr()
 
     def load_texture(self, texid, gltf_tex, gltf_data):
         source = gltf_data['images'][gltf_tex['source']]
