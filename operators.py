@@ -73,12 +73,16 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             self.report({'ERROR'}, e.value)
             return {'CANCELLED'}
 
+        available_extensions = blendergltf.extension_exporters
         gltf_settings = {
+            'gltf_output_dir': os.path.dirname(self.filepath),
             'images_data_storage': 'COPY' if self.copy_images else 'REFERENCE',
             'nodes_export_hidden': True,
-            'ext_export_physics': True,
-            'ext_export_actions': True,
-            'gltf_output_dir': os.path.dirname(self.filepath),
+            'images_allow_srgb': True,
+            'extension_exporters': [
+                available_extensions.khr_materials_common.KhrMaterialsCommon(),
+                available_extensions.blender_physics.BlenderPhysics(),
+            ],
         }
         collections_list = engine.DEFAULT_WATCHLIST + ['actions']
         scene_delta = {

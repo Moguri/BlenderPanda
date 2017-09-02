@@ -102,8 +102,8 @@ class Converter():
                 if HAVE_BULLET and 'BLENDER_physics' in gltf_node['extensions']:
                     phy = gltf_node['extensions']['BLENDER_physics']
                     shape = None
-                    radius = max(phy['dimensions'][0], phy['dimensions'][1]) / 2.0
-                    height = phy['dimensions'][2]
+                    radius = max(phy['bounding_box'][0], phy['bounding_box'][1]) / 2.0
+                    height = phy['bounding_box'][2]
                     geomnode = None
                     static = 'static' in phy and phy['static']
                     if 'mesh' in phy:
@@ -113,9 +113,9 @@ class Converter():
                             print("Could not find physics mesh ({}) for object ({})".format(phy['mesh'], nodeid))
 
                     if phy['collisionShape'] == 'BOX':
-                        shape = bullet.BulletBoxShape(LVector3(*phy['dimensions']) / 2.0)
+                        shape = bullet.BulletBoxShape(LVector3(*phy['bounding_box']) / 2.0)
                     elif phy['collisionShape'] == 'SPHERE':
-                        shape = bullet.BulletSphereShape(max(phy['dimensions']) / 2.0)
+                        shape = bullet.BulletSphereShape(max(phy['bounding_box']) / 2.0)
                     elif phy['collisionShape'] == 'CAPSULE':
                         shape = bullet.BulletCapsuleShape(radius, height - 2.0 * radius, bullet.ZUp)
                     elif phy['collisionShape'] == 'CYLINDER':
@@ -152,7 +152,7 @@ class Converter():
                     np.set_tag(key, str(value))
 
 
-            for child_nodeid in gltf_node['children']:
+            for child_nodeid in gltf_node.get('children', []):
                 add_node(np, gltf_scene, child_nodeid)
 
             # Handle visibility after children are loaded
@@ -193,7 +193,7 @@ class Converter():
             self.scenes[sceneid] = scene_root
 
         # Set the active scene
-        sceneid = gltf_data['scene']
+        sceneid = gltf_data.get('scene', None)
         if sceneid in self.scenes:
             self.active_scene = self.scenes[sceneid]
         if 'scenes' in gltf_data:
