@@ -238,7 +238,7 @@ class Converter():
         if matid not in self.mat_mesh_map:
             self.mat_mesh_map[matid] = []
 
-        pmat = Material()
+        pmat = Material(gltf_mat['name'])
         textures = []
 
         if 'extensions' in gltf_mat and 'KHR_materials_common' in gltf_mat['extensions']:
