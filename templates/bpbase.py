@@ -17,7 +17,8 @@ def init(base):
     # Add export directory to model path
     exportdir = pman.get_abs_path(config, config.get('build', 'export_dir'))
     maindir = os.path.dirname(pman.get_abs_path(config, config.get('run', 'main_file')))
-    exportdir = os.path.relpath(exportdir, maindir)
+    if pman.is_frozen():
+        exportdir = os.path.relpath(exportdir, maindir)
     exportdir = p3d.Filename.from_os_specific(exportdir)
     p3d.get_model_path().prepend_directory(exportdir)
 
