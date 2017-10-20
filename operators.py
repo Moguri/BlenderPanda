@@ -79,6 +79,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             'images_data_storage': 'COPY' if self.copy_images else 'REFERENCE',
             'nodes_export_hidden': True,
             'images_allow_srgb': True,
+            'asset_profile': 'DESKTOP',
             'extension_exporters': [
                 available_extensions.khr_materials_common.KhrMaterialsCommon(),
                 available_extensions.blender_physics.BlenderPhysics(),
