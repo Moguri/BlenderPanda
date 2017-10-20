@@ -439,7 +439,7 @@ class Converter():
                 jvtmap[joint_index] = JointVertexTransform(joint)
 
 
-            for child in node['children']:
+            for child in node.get('children', []):
                 #print("Create joint for child", child)
                 bone_node = gltf_data['nodes'][child]
                 create_joint(joint, bone_node, bind_pose * transform)
