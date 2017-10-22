@@ -10,7 +10,7 @@ except ImportError:
         import blenderpanda.pman as pman
 
 
-_srgb_vert = """
+_SRGB_VERT = """
 #version 130
 
 uniform mat4 p3d_ModelViewProjectionMatrix;
@@ -27,7 +27,7 @@ void main() {
 """
 
 
-_srgb_frag = """
+_SRGB_FRAG = """
 #version 130
 
 uniform sampler2D tex;
@@ -54,7 +54,7 @@ class BasicRenderManager:
         manager = FilterManager(base.win, base.cam)
         self.post_tex = p3d.Texture()
         post_quad = manager.renderSceneInto(colortex=self.post_tex)
-        post_quad.set_shader(p3d.Shader.make(p3d.Shader.SL_GLSL, _srgb_vert, _srgb_frag))
+        post_quad.set_shader(p3d.Shader.make(p3d.Shader.SL_GLSL, _SRGB_VERT, _SRGB_FRAG))
         post_quad.set_shader_input('tex', self.post_tex)
 
 
@@ -97,4 +97,3 @@ def create_render_manager(base, config=None):
             mod = load_module(modname, modinfo)
 
     return mod.get_plugin()(base)
-
