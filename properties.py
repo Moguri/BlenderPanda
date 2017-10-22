@@ -10,7 +10,7 @@ class ConfTypes(Enum):
     boolean = 3
 
 def get_conf_prop(section, field, conf_type):
-    def f(self):
+    def f(_self):
         config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
 
         if conf_type == ConfTypes.string:
@@ -30,7 +30,7 @@ def get_conf_prop(section, field, conf_type):
 
 
 def set_conf_prop(section, field, conf_type=ConfTypes.string):
-    def f(self, value):
+    def f(_self, value):
         config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
         if conf_type == ConfTypes.path:
             # Convert from Blender path to pman path
@@ -106,4 +106,3 @@ def register():
 
 def unregister():
     pass
-
