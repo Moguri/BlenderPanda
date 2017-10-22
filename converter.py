@@ -176,7 +176,7 @@ class Converter():
             # Check if we need to deal with negative scale values
             scale = panda_node.get_transform().get_scale()
             negscale = scale.x * scale.y * scale.z < 0
-            if (negscale):
+            if negscale:
                 for geomnode in np.find_all_matches('**/+GeomNode'):
                     tmp = geomnode.get_parent().attach_new_node(PandaNode('ReverseCulling'))
                     tmp.set_attrib(CullFaceAttrib.make_reverse())
@@ -190,7 +190,7 @@ class Converter():
                 node_list += gltf_scene['extras']['hidden_nodes']
 
             for nodeid in node_list:
-                add_node(scene_root, gltf_scene,  nodeid)
+                add_node(scene_root, gltf_scene, nodeid)
 
             self.scenes[sceneid] = scene_root
 
@@ -336,11 +336,11 @@ class Converter():
                     if chan['target']['path'] == path
                 ][0]
 
-                bv = gltf_data['bufferViews'][acc['bufferView']]
-                buff = gltf_data['buffers'][bv['buffer']]
+                buff_view = gltf_data['bufferViews'][acc['bufferView']]
+                buff = gltf_data['buffers'][buff_view['buffer']]
                 buff_data = base64.b64decode(buff['uri'].split(',')[1])
-                start = bv['byteOffset']
-                end = bv['byteOffset'] + bv['byteLength']
+                start = buff_view['byteOffset']
+                end = buff_view['byteOffset'] + buff_view['byteLength']
 
                 if path == 'rotation':
                     data = [struct.unpack_from('<ffff', buff_data, idx) for idx in range(start, end, 4 * 4)]
@@ -412,7 +412,7 @@ class Converter():
         ibmbv = gltf_data['bufferViews'][ibmacc['bufferView']]
         ibmbuff = gltf_data['buffers'][ibmbv['buffer']]
         ibmdata = base64.b64decode(ibmbuff['uri'].split(',')[1])
-        ibmbuffstart = ibmbv['byteOffset']
+
         for i in range(ibmacc['count']):
             mat = struct.unpack_from('<{}'.format('f'*16), ibmdata, i * 16 * 4)
             #print('loaded', mat)
@@ -464,10 +464,10 @@ class Converter():
                 #print("\t", gltf_anim['name'])
                 self.create_anim(character, skel_name, gltf_anim, gltf_data)
 
-        return character, jvtmap
+        return jvtmap
 
 
-    def load_mesh(self, meshid,  gltf_mesh, gltf_data):
+    def load_mesh(self, meshid, gltf_mesh, gltf_data):
         node = self.meshes.get(meshid, GeomNode(gltf_mesh['name']))
 
         # Clear any existing mesh data
@@ -478,34 +478,42 @@ class Converter():
         is_skinned = 'WEIGHT' in mesh_attribs
 
         # Describe the vertex data
-        va = GeomVertexArrayFormat()
-        va.add_column(InternalName.get_vertex(), 3, GeomEnums.NT_float32, GeomEnums.C_point)
-        va.add_column(InternalName.get_normal(), 3, GeomEnums.NT_float32, GeomEnums.C_normal)
+        vert_array = GeomVertexArrayFormat()
+        vert_array.add_column(InternalName.get_vertex(), 3, GeomEnums.NT_float32, GeomEnums.C_point)
+        vert_array.add_column(InternalName.get_normal(), 3, GeomEnums.NT_float32, GeomEnums.C_normal)
 
         if is_skinned:
             # Find all nodes that use this mesh and try to find a skin
-            gltf_nodes = [gltf_node for gltf_node in gltf_data['nodes'].values() if 'meshes' in gltf_node and meshid in gltf_node['meshes']]
+            gltf_nodes = [
+                gltf_node
+                for gltf_node in gltf_data['nodes'].values()
+                if 'meshes' in gltf_node and meshid in gltf_node['meshes']
+            ]
             gltf_node = [gltf_node for gltf_node in gltf_nodes if 'skin' in gltf_node][0]
             gltf_skin = gltf_data['skins'][gltf_node['skin']]
 
-            character, jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
+            jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
             tb_va = GeomVertexArrayFormat()
             tb_va.add_column(InternalName.get_transform_blend(), 1, GeomEnums.NTUint16, GeomEnums.CIndex)
             tbtable = TransformBlendTable()
 
-        uv_layers = [i.replace('TEXCOORD_', '') for i in gltf_mesh['primitives'][0]['attributes'] if i.startswith('TEXCOORD_')]
+        uv_layers = [
+            i.replace('TEXCOORD_', '')
+            for i in gltf_mesh['primitives'][0]['attributes']
+            if i.startswith('TEXCOORD_')
+        ]
         for uv_layer in uv_layers:
-            va.add_column(InternalName.get_texcoord_name(uv_layer), 2, GeomEnums.NTFloat32, GeomEnums.CTexcoord)
+            vert_array.add_column(InternalName.get_texcoord_name(uv_layer), 2, GeomEnums.NTFloat32, GeomEnums.CTexcoord)
 
-        #reg_format = GeomVertexFormat.register_format(GeomVertexFormat(va))
-        format = GeomVertexFormat()
-        format.add_array(va)
+        #reg_format = GeomVertexFormat.register_format(GeomVertexFormat(vert_array))
+        vformat = GeomVertexFormat()
+        vformat.add_array(vert_array)
         if is_skinned:
-            format.add_array(tb_va)
+            vformat.add_array(tb_va)
             aspec = GeomVertexAnimationSpec()
             aspec.set_panda()
-            format.set_animation(aspec)
-        reg_format = GeomVertexFormat.register_format(format)
+            vformat.set_animation(aspec)
+        reg_format = GeomVertexFormat.register_format(vformat)
         vdata = GeomVertexData(gltf_mesh['name'], reg_format, GeomEnums.UH_stream)
         if is_skinned:
             vdata.set_transform_blend_table(tbtable)
@@ -517,11 +525,11 @@ class Converter():
         handle = vdata.modify_array(0).modify_handle()
         handle.unclean_set_num_rows(pacc['count'])
 
-        bv = gltf_data['bufferViews'][pacc['bufferView']]
-        buff = gltf_data['buffers'][bv['buffer']]
+        buff_view = gltf_data['bufferViews'][pacc['bufferView']]
+        buff = gltf_data['buffers'][buff_view['buffer']]
         buff_data = base64.b64decode(buff['uri'].split(',')[1])
-        start = bv['byteOffset']
-        end = bv['byteOffset'] + bv['byteLength']
+        start = buff_view['byteOffset']
+        end = buff_view['byteOffset'] + buff_view['byteLength']
         handle.copy_data_from(buff_data[start:end])
         handle = None
         #idx = start
@@ -571,11 +579,11 @@ class Converter():
             handle = prim.modify_vertices(num_verts).modify_handle()
             handle.unclean_set_num_rows(num_verts)
 
-            bv = gltf_data['bufferViews'][iacc['bufferView']]
-            buff = gltf_data['buffers'][bv['buffer']] 
+            buff_view = gltf_data['bufferViews'][iacc['bufferView']]
+            buff = gltf_data['buffers'][buff_view['buffer']]
             buff_data = base64.b64decode(buff['uri'].split(',')[1])
-            start = bv['byteOffset']
-            end = bv['byteOffset'] + bv['byteLength']
+            start = buff_view['byteOffset']
+            end = buff_view['byteOffset'] + buff_view['byteLength']
             handle.copy_data_from(buff_data[start:end])
             #idx = start
             #indbuf = []
@@ -665,7 +673,7 @@ class Converter():
         self.lights[lightid] = node
 
 
-if __name__ == '__main__':
+def main():
     import sys
     import json
 
@@ -679,7 +687,7 @@ if __name__ == '__main__':
         gltf_data = json.load(f)
 
     dstfname = Filename.fromOsSpecific(sys.argv[2])
-    get_model_path().prepend_directory(dstfname.getDirname()) 
+    get_model_path().prepend_directory(dstfname.getDirname())
 
     converter = Converter()
     converter.update(gltf_data, writing_bam=True)
@@ -687,3 +695,7 @@ if __name__ == '__main__':
     #converter.active_scene.ls()
 
     converter.active_scene.write_bam_file(dstfname)
+
+
+if __name__ == '__main__':
+    main()
