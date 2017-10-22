@@ -1,5 +1,6 @@
 # BlenderPanda
 [![Documentation Status](https://readthedocs.org/projects/blenderpanda/badge/?version=latest)](http://blenderpanda.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/Moguri/BlenderPanda.svg?branch=master)](https://travis-ci.org/Moguri/BlenderPanda)
 
 Blender addon for integrating [Panda3D](http://www.panda3d.org/)
 
