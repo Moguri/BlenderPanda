@@ -106,6 +106,16 @@ def get_config(startdir=None):
     return _get_config(startdir, '.pman',  _config_defaults)
 
 
+def config_exists(startdir=None):
+    try:
+        _ = get_config(startdir)
+        have_config = True
+    except NoConfigError:
+        have_config = False
+
+    return have_config
+
+
 def get_user_config(startdir=None):
     try:
         return _get_config(startdir, '.pman.user', _user_config_defaults)

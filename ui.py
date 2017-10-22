@@ -1,5 +1,6 @@
-import bpy
 import os
+
+import bpy
 
 from . import pman
 from . import operators
@@ -18,7 +19,7 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
     bl_label = "Project Settings"
     bl_context = "render"
 
-    def draw_with_config(self, context, config):
+    def draw_with_config(self, context, _config):
         layout = self.layout
         project_settings = context.scene.panda_project
 
@@ -27,16 +28,15 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
         layout.operator(operators.UpdateProject.bl_idname)
 
 
-    def draw_no_config(self, context):
+    def draw_no_config(self, _context):
         layout = self.layout
-
         layout.label(text="No config file detected")
 
     def draw(self, context):
-        try:
-            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
-            self.draw_with_config(context, config)
-        except pman.NoConfigError:
+        confdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+        if pman.config_exists(confdir):
+            self.draw_with_config(context, pman.get_config(confdir))
+        else:
             self.draw_no_config(context)
 
         layout = self.layout
@@ -50,12 +50,8 @@ class PandaRender_PT_build(PandaButtonsPanel, bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        try:
-            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
-            have_config = True
-        except pman.NoConfigError:
-            have_config = False
-        return PandaButtonsPanel.poll(context) and have_config
+        confdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+        return PandaButtonsPanel.poll(context) and pman.config_exists(confdir)
 
     def draw(self, context):
         layout = self.layout
@@ -72,12 +68,8 @@ class PandaRender_PT_run(PandaButtonsPanel, bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        try:
-            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
-            have_config = True
-        except pman.NoConfigError:
-            have_config = False
-        return PandaButtonsPanel.poll(context) and have_config
+        confdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+        return PandaButtonsPanel.poll(context) and pman.config_exists(confdir)
 
     def draw(self, context):
         layout = self.layout
@@ -108,7 +100,7 @@ class Panda_PT_context_material(PandaButtonsPanel, bpy.types.Panel):
 
         if ob:
             rows = 1
-            if (is_sortable):
+            if is_sortable:
                 rows = 4
 
             row = layout.row()
@@ -210,7 +202,7 @@ class PandaPhysics_PT_add(PandaButtonsPanel, bpy.types.Panel):
     bl_options = {'HIDE_HEADER'}
 
     @classmethod
-    def poll(self, context):
+    def poll(cls, context):
         return PandaButtonsPanel.poll(context) and context.object
 
     def draw(self, context):
