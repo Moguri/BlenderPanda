@@ -1,7 +1,4 @@
-import ctypes
 import json
-import math
-import os
 import socket
 import struct
 import sys
@@ -23,7 +20,8 @@ from converter import Converter
 import rendermanager
 
 
-p3d.load_prc_file_data('', 
+p3d.load_prc_file_data(
+    '',
     'window-type none\n'
     'gl-debug #t\n'
 )
@@ -43,8 +41,8 @@ class Server(threading.Thread):
             try:
                 self.socket.connect(('127.0.0.1', 5555))
                 break
-            except Exception as e:
-                print(e)
+            except socket.error as err:
+                print(err)
                 time.sleep(1)
                 remaining_attempts -= 1
         else:
@@ -68,7 +66,7 @@ class Server(threading.Thread):
     def run(self):
         while True:
             msg_header = self.socket.recv(2)
-            if len(msg_header) == 0:
+            if not msg_header:
                 print("Received zero-length msg header, aborting")
                 break
 
@@ -77,7 +75,7 @@ class Server(threading.Thread):
                 data_size = struct.unpack('=I', self.socket.recv(4))[0]
                 data = bytearray(data_size)
                 view = memoryview(data)
-                while len(view) > 0:
+                while view:
                     rcv_size = self.socket.recv_into(view, len(view))
                     view = view[rcv_size:]
                 data = json.loads(data.decode('ascii'))
@@ -119,13 +117,14 @@ class App(ShowBase):
 
         self.pipe = p3d.GraphicsPipeSelection.get_global_ptr().make_module_pipe('pandagl')
 
-        self.bg = p3d.LVecBase4(0.0, 0.0, 0.0, 1.0)
+        self.bg_color = p3d.LVecBase4(0.0, 0.0, 0.0, 1.0)
 
         p3d.get_model_path().prepend_directory(workingdir)
         self.workingdir = workingdir
 
         self.texture = p3d.Texture()
         self.win = None
+        self.rendermanager = None
         self.make_offscreen(1, 1)
 
         self.disableMouse()
@@ -159,9 +158,9 @@ class App(ShowBase):
                         self.view_lens.set_view_mat(view_mat)
 
                 self.converter.update(data)
-                bg = self.converter.background_color
-                self.bg = p3d.LVector4(bg[0], bg[1], bg[2], 1)
-                self.view_region.set_clear_color(self.bg)
+                bg_color = self.converter.background_color
+                self.bg_color = p3d.LVector4(bg_color[0], bg_color[1], bg_color[2], 1)
+                self.view_region.set_clear_color(self.bg_color)
                 self.converter.active_scene.reparent_to(self.render)
                 #self.render.ls()
 
@@ -202,11 +201,11 @@ class App(ShowBase):
 
         self.rendermanager = rendermanager.create_render_manager(self, pman_conf)
 
-    def make_offscreen(self, sx, sy):
-        sx = p3d.Texture.up_to_power_2(sx)
-        sy = p3d.Texture.up_to_power_2(sy)
+    def make_offscreen(self, sizex, sizey):
+        sizex = p3d.Texture.up_to_power_2(sizex)
+        sizey = p3d.Texture.up_to_power_2(sizey)
 
-        if self.win and self.win.get_size()[0] == sx and self.win.get_size()[1] == sy:
+        if self.win and self.win.get_size()[0] == sizex and self.win.get_size()[1] == sizey:
             # The current window is good, don't waste time making a new one
             return
 
@@ -221,42 +220,42 @@ class App(ShowBase):
         fbprops = p3d.FrameBufferProperties()
         fbprops.set_rgba_bits(8, 8, 8, 0)
         fbprops.set_depth_bits(24)
-        wp = p3d.WindowProperties.size(sx, sy)
+        winprops = p3d.WindowProperties.size(sizex, sizey)
         flags = p3d.GraphicsPipe.BF_refuse_window
         #flags = p3d.GraphicsPipe.BF_require_window
         self.win = self.graphicsEngine.make_output(
-                self.pipe,
-                'window',
-                0,
-                fbprops,
-                wp,
-                flags
+            self.pipe,
+            'window',
+            0,
+            fbprops,
+            winprops,
+            flags
         )
 
         if self.win is None:
             # Try again with an alpha channel this time (32bit buffer)
             fbprops.set_rgba_bits(8, 8, 8, 8)
             self.win = self.graphicsEngine.make_output(
-                    self.pipe,
-                    'window',
-                    0,
-                    fbprops,
-                    wp,
-                    flags
+                self.pipe,
+                'window',
+                0,
+                fbprops,
+                winprops,
+                flags
             )
 
         if self.win is None:
             print('Unable to open window')
             sys.exit(-1)
 
-        dr = self.win.make_mono_display_region()
-        dr.set_camera(self.cam)
-        dr.set_active(True)
-        dr.set_clear_color_active(True)
-        dr.set_clear_color(self.bg)
-        dr.set_clear_depth(1.0)
-        dr.set_clear_depth_active(True)
-        self.view_region = dr
+        disp_region = self.win.make_mono_display_region()
+        disp_region.set_camera(self.cam)
+        disp_region.set_active(True)
+        disp_region.set_clear_color_active(True)
+        disp_region.set_clear_color(self.bg_color)
+        disp_region.set_clear_depth(1.0)
+        disp_region.set_clear_depth_active(True)
+        self.view_region = disp_region
         self.graphicsEngine.open_windows()
 
         self.setFrameRateMeter(use_frame_rate_meter)
@@ -270,10 +269,14 @@ class App(ShowBase):
     def handle_data(self, data):
         self.conversion_queue.put(data)
 
-    def get_img(self, dt):
+    def get_img(self, _dt):
         return self.image_width, self.image_height, self.image_data
 
 
-if __name__ == "__main__":
+def main():
     app = App(sys.argv[1])
     app.run()
+
+
+if __name__ == "__main__":
+    main()
