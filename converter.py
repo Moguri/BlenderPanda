@@ -71,9 +71,11 @@ class Converter():
                 if nodeid in gltf_scene['extras']['hidden_nodes']:
                     panda_node = panda_node.make_copy()
             np = root.attach_new_node(panda_node)
-            np.set_pos(*gltf_node['translation'])
-            np.set_hpr(self.load_quaternion_as_hpr(gltf_node['rotation']))
-            np.set_scale(*gltf_node['scale'])
+
+
+            np.set_pos(*gltf_node.get('translation', [0, 0, 0]))
+            np.set_hpr(self.load_quaternion_as_hpr(gltf_node.get('rotation', [0, 0, 0, 1])))
+            np.set_scale(*gltf_node.get('scale', [1, 1, 1]))
 
             if 'meshes' in gltf_node:
                 np_tmp = np
