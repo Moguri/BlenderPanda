@@ -2,7 +2,6 @@ import fnmatch
 import os
 import shutil
 import subprocess
-import sys
 import time
 from collections import OrderedDict
 try:
@@ -33,13 +32,13 @@ class FrozenEnvironmentError(PManException):
 
 
 if '__file__' not in globals():
-    __is_frozen = True
+    __IS_FROZEN = True
     __file__ = ''
 else:
-    __is_frozen = False
+    __IS_FROZEN = False
 
 
-_config_defaults = OrderedDict([
+_CONFIG_DEFAULTS = OrderedDict([
     ('general', OrderedDict([
         ('name', 'Game'),
         ('render_plugin', ''),
@@ -56,7 +55,7 @@ _config_defaults = OrderedDict([
     ])),
 ])
 
-_user_config_defaults = OrderedDict([
+_USER_CONFIG_DEFAULTS = OrderedDict([
     ('blender', OrderedDict([
         ('last_path', 'blender'),
         ('use_last_path', True),
@@ -103,12 +102,12 @@ def _get_config(startdir, conf_name, defaults):
 
 
 def get_config(startdir=None):
-    return _get_config(startdir, '.pman',  _config_defaults)
+    return _get_config(startdir, '.pman', _CONFIG_DEFAULTS)
 
 
 def config_exists(startdir=None):
     try:
-        _ = get_config(startdir)
+        get_config(startdir)
         have_config = True
     except NoConfigError:
         have_config = False
@@ -118,16 +117,15 @@ def config_exists(startdir=None):
 
 def get_user_config(startdir=None):
     try:
-        return _get_config(startdir, '.pman.user', _user_config_defaults)
+        return _get_config(startdir, '.pman.user', _USER_CONFIG_DEFAULTS)
     except NoConfigError:
         # No user config, just create one
         config = get_config(startdir)
-        fp = os.path.join(config.get('internal', 'projectdir'), '.pman.user')
-        print("Creating user config at {}".format(fp))
-        with open(fp, 'w') as f:
-            pass
+        file_path = os.path.join(config.get('internal', 'projectdir'), '.pman.user')
+        print("Creating user config at {}".format(file_path))
+        open(file_path, 'w').close()
 
-        return _get_config(startdir, '.pman.user', _user_config_defaults)
+        return _get_config(startdir, '.pman.user', _USER_CONFIG_DEFAULTS)
 
 
 def _write_config(config, conf_name):
@@ -148,10 +146,10 @@ def write_user_config(user_config):
 
 
 def is_frozen():
-    return __is_frozen
+    return __IS_FROZEN
 
 
-def get_python_program(config):
+def get_python_program(_config):
     python_programs = [
         'ppython',
         'python3',
@@ -166,9 +164,9 @@ def get_python_program(config):
             '-c',
             'import panda3d.core; import direct',
         ]
-        with open(os.devnull, 'w') as fp:
+        with open(os.devnull, 'w') as f:
             try:
-                retcode = subprocess.call(args, stderr=fp)
+                retcode = subprocess.call(args, stderr=f)
             except FileNotFoundError:
                 retcode = 1
 
@@ -234,7 +232,6 @@ def create_project(projectdir):
             f.write(main_data)
         print("\tmain.py created at {}".format(mainpath))
 
-   
     bpmodpath = os.path.join(projectdir, 'game/blenderpanda')
     if os.path.exists(bpmodpath):
         print("Updating blenderpanda module")
@@ -242,10 +239,10 @@ def create_project(projectdir):
     else:
         print("Creating blenderpanda module")
     os.mkdir(bpmodpath)
-    for cf in bpanda_mod_files:
-        bname = os.path.basename(cf)
+    for copy_file in bpanda_mod_files:
+        bname = os.path.basename(copy_file)
         print("\tCopying over {}".format(bname))
-        cfsrc = os.path.join(os.path.dirname(__file__), cf)
+        cfsrc = os.path.join(os.path.dirname(__file__), copy_file)
         cfdst = os.path.join(projectdir, 'game', 'blenderpanda', bname)
         shutil.copy(cfsrc, cfdst)
         print("\t\t{} created at {}".format(bname, cfdst))
@@ -293,7 +290,7 @@ def build(config=None):
     print("Ignoring file patterns: {}".format(ignore_patterns))
 
     num_blends = 0
-    for root, dirs, files in os.walk(srcdir):
+    for root, _dirs, files in os.walk(srcdir):
         for asset in files:
             src = os.path.join(root, asset)
             dst = src.replace(srcdir, dstdir)
@@ -324,7 +321,8 @@ def build(config=None):
                 shutil.copyfile(src, dst)
 
     if num_blends > 0:
-        blender_path = user_config.get('blender', 'last_path') if user_config.getboolean('blender', 'use_last_path') else 'blender'
+        use_last_path = user_config.getboolean('blender', 'use_last_path')
+        blender_path = user_config.get('blender', 'last_path') if use_last_path else 'blender'
         args = [
             blender_path,
             '-b',
