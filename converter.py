@@ -104,8 +104,8 @@ class Converter():
                 if HAVE_BULLET and 'BLENDER_physics' in gltf_node['extensions']:
                     phy = gltf_node['extensions']['BLENDER_physics']
                     shape = None
-                    radius = max(phy['bounding_box'][0], phy['bounding_box'][1]) / 2.0
-                    height = phy['bounding_box'][2]
+                    radius = max(phy['boundingBox'][0], phy['boundingBox'][1]) / 2.0
+                    height = phy['boundingBox'][2]
                     geomnode = None
                     static = 'static' in phy and phy['static']
                     if 'mesh' in phy:
@@ -115,9 +115,9 @@ class Converter():
                             print("Could not find physics mesh ({}) for object ({})".format(phy['mesh'], nodeid))
 
                     if phy['collisionShape'] == 'BOX':
-                        shape = bullet.BulletBoxShape(LVector3(*phy['bounding_box']) / 2.0)
+                        shape = bullet.BulletBoxShape(LVector3(*phy['boundingBox']) / 2.0)
                     elif phy['collisionShape'] == 'SPHERE':
-                        shape = bullet.BulletSphereShape(max(phy['bounding_box']) / 2.0)
+                        shape = bullet.BulletSphereShape(max(phy['boundingBox']) / 2.0)
                     elif phy['collisionShape'] == 'CAPSULE':
                         shape = bullet.BulletCapsuleShape(radius, height - 2.0 * radius, bullet.ZUp)
                     elif phy['collisionShape'] == 'CYLINDER':
@@ -137,7 +137,7 @@ class Converter():
                                 mesh.add_geom(geom)
                             shape = bullet.BulletTriangleMeshShape(mesh, dynamic=not static)
                     else:
-                        print("Unknown collision shape ({}) for object ({})".format(phy['collision_shape'], nodeid))
+                        print("Unknown collision shape ({}) for object ({})".format(phy['collisionShape'], nodeid))
 
                     if shape is not None:
                         phynode = bullet.BulletRigidBodyNode(gltf_node['name'])
