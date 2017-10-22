@@ -4,7 +4,7 @@ import math
 import base64
 import struct
 
-from panda3d.core import *
+from panda3d.core import * # pylint: disable=wildcard-import
 try:
     from panda3d import bullet
     HAVE_BULLET = True

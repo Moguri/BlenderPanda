@@ -1,4 +1,4 @@
-bl_info = {
+bl_info = { # pylint: disable=invalid-name
     "name": "Panda3D Integration",
     "author": "Mitchell Stokes",
     "blender": (2, 74, 0),
@@ -14,6 +14,7 @@ bl_info = {
 if "bpy" in locals():
     import imp
     unregister()
+    #pylint: disable=used-before-assignment
     imp.reload(pman)
     imp.reload(panda_engine)
     imp.reload(ui)
@@ -34,7 +35,7 @@ else:
     from . import rendermanager
 
 @bpy.app.handlers.persistent
-def load_handler(_):
+def load_handler(_dummy):
     operators.update_blender_path()
 
 def register():
