@@ -79,7 +79,7 @@ class Converter():
                 np_tmp = np
 
                 if 'skeletons' in gltf_node:
-                    char = self.characters[nodeid]
+                    char = self.characters[gltf_node['name']]
                     np_tmp = np.attach_new_node(char)
 
                 for meshid in gltf_node['meshes']:
@@ -295,7 +295,7 @@ class Converter():
 
         self.mat_states[matid] = state
 
-    def create_anim(self, character, skel_name, anim_name, gltf_anim, gltf_data):
+    def create_anim(self, character, skel_name, gltf_anim, gltf_data):
         root_bone = gltf_data['nodes'][skel_name]
         if 'extras' in gltf_data['scenes'][gltf_data['scene']]:
             fps = gltf_data['scenes'][gltf_data['scene']].get('frames_per_second', 30)
@@ -387,18 +387,18 @@ class Converter():
                 group.set_table(b'k', CPTAFloat(PTAFloat(scale_vals[2])))
 
 
-            for childid in bone['children']:
+            for childid in bone.get('children', []):
                 create_anim_channel(group, childid)
 
         create_anim_channel(skeleton, skel_name)
         character.add_child(AnimBundleNode(root_bone['name'], bundle))
 
-    def create_character(self, nodeid, gltf_node, gltf_skin, gltf_mesh, gltf_data):
+    def create_character(self, gltf_node, gltf_skin, gltf_mesh, gltf_data):
         #print("Creating skinned mesh for", gltf_mesh['name'])
         skel_name = gltf_node['skeletons'][0]
         root = gltf_data['nodes'][skel_name]
 
-        character = Character(nodeid)
+        character = Character(gltf_mesh['name'])
         bundle = character.get_bundle(0)
         skeleton = PartGroup(bundle, "<skeleton>")
         jvtmap = {}
@@ -445,23 +445,22 @@ class Converter():
                 create_joint(joint, bone_node, bind_pose * transform)
 
         create_joint(skeleton, root, LMatrix4.ident_mat())
-        #print("Adding skinned mesh to", nodeid)
-        self.characters[nodeid] = character
+        #print("Adding skinned mesh to", gltf_node['name'])
+        self.characters[gltf_node['name']] = character
 
         # convert animations
         #print("Looking for actions for", skel_name)
-        clean_skel_name = skel_name.replace('node_', '')
-        anims = {
-            anim_name.split('|')[-1]: anim
-            for anim_name, anim in gltf_data.get('animations', {}).items()
-            if anim_name.startswith(clean_skel_name)
-        }
+        anims = [
+            anim
+            for anim in gltf_data.get('animations', {}).values()
+            if skel_name in {chan['target']['id'] for chan in anim['channels']}
+        ]
 
         if anims:
-            #print("Found anims for", nodeid)
-            for anim, gltf_anim in anims.items():
-                #print("\t", anim)
-                self.create_anim(character, skel_name, anim, gltf_anim, gltf_data)
+            #print("Found anims for", gltf_node['name'])
+            for gltf_anim in anims:
+                #print("\t", gltf_anim['name'])
+                self.create_anim(character, skel_name, gltf_anim, gltf_data)
 
         return character, jvtmap
 
@@ -483,10 +482,11 @@ class Converter():
 
         if is_skinned:
             # Find all nodes that use this mesh and try to find a skin
-            gltf_nodes = {nodeid:gltf_node for nodeid,gltf_node in gltf_data['nodes'].items() if 'meshes' in gltf_node and meshid in gltf_node['meshes']}
-            nodeid, gltf_node = [(nodeid, gltf_node) for nodeid, gltf_node in gltf_nodes.items() if 'skin' in gltf_node][0]
+            gltf_nodes = [gltf_node for gltf_node in gltf_data['nodes'].values() if 'meshes' in gltf_node and meshid in gltf_node['meshes']]
+            gltf_node = [gltf_node for gltf_node in gltf_nodes if 'skin' in gltf_node][0]
             gltf_skin = gltf_data['skins'][gltf_node['skin']]
-            character, jvtmap = self.create_character(nodeid, gltf_node, gltf_skin, gltf_mesh, gltf_data)
+
+            character, jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
             tb_va = GeomVertexArrayFormat()
             tb_va.add_column(InternalName.get_transform_blend(), 1, GeomEnums.NTUint16, GeomEnums.CIndex)
             tbtable = TransformBlendTable()
@@ -538,12 +538,12 @@ class Converter():
             sbuff_data = base64.b64decode(sbuff['uri'].split(',')[1])
 
             for i in range(0, sbv['byteLength'], 32):
-                joints = struct.unpack_from('<ffff', sbuff_data, i)
+                joints = struct.unpack_from('<BBBB', sbuff_data, i)
                 weights = struct.unpack_from('<ffff', sbuff_data, i+16)
                 #print(i, joints, weights)
                 tblend = TransformBlend()
                 for j in range(4):
-                    joint = int(joints[j])
+                    joint = joints[j]
                     weight = weights[j]
                     try:
                         jvt = jvtmap[joint]
