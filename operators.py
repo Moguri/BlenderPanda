@@ -1,16 +1,12 @@
 import json
 import os
-import shutil
 import subprocess
-import sys
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
 from .brte.brte import engine
-from .brte.brte.converters import BTFConverter
-
-import blendergltf
+from .import blendergltf
 
 from . import pman
 
@@ -45,32 +41,16 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         options={'HIDDEN'},
     )
 
-    def _collect_deltas(self):
-        """Return the various deltas needed by BTFConverter.convert()"""
-        add_delta = {}
-        update_delta = {}
-        remove_delta = {}
-        view_delta = {}
-
-        collections_list = engine.DEFAULT_WATCHLIST + ['actions']
-
-        for collection in [getattr(bpy.data, i) for i in collections_list]:
-            collection_name = engine.get_collection_name(collection)
-            collection_set = set(collection)
-            add_delta[collection_name] = collection_set
-
-        return (add_delta, update_delta, remove_delta, view_delta)
-
-    def execute(self, context):
+    def execute(self, _context):
         try:
             config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
-        except pman.NoConfigError as e:
+        except pman.NoConfigError as err:
             config = None
 
         try:
             pycmd = pman.get_python_program(config)
-        except pman.CouldNotFindPythonError as e:
-            self.report({'ERROR'}, e.value)
+        except pman.CouldNotFindPythonError as err:
+            self.report({'ERROR'}, str(err))
             return {'CANCELLED'}
 
         available_extensions = blendergltf.extension_exporters
@@ -134,7 +114,7 @@ class CreateProject(bpy.types.Operator):
         default=True,
     )
 
-    def execute(self, context):
+    def execute(self, _context):
         pman.create_project(self.directory)
 
         if self.switch_dir:
@@ -144,11 +124,11 @@ class CreateProject(bpy.types.Operator):
 
         return {'FINISHED'}
 
-    def invoke(self, context, event):
+    def invoke(self, context, _event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-    def draw(self, context):
+    def draw(self, _context):
         layout = self.layout
 
         layout.prop(self, 'switch_dir')
@@ -158,13 +138,13 @@ class UpdateProject(bpy.types.Operator):
     bl_idname = 'panda_engine.update_project'
     bl_label = 'Update Project Files'
 
-    def execute(self, context):
+    def execute(self, _context):
         try:
             config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
             pman.create_project(pman.get_abs_path(config, ''))
             return {'FINISHED'}
-        except pman.PManException as e:
-            self.report({'ERROR'}, e.value)
+        except pman.PManException as err:
+            self.report({'ERROR'}, str(err))
             return {'CANCELLED'}
 
 
@@ -179,12 +159,12 @@ class SwitchProject(bpy.types.Operator):
         subtype='DIR_PATH',
     )
 
-    def execute(self, context):
+    def execute(self, _context):
         os.chdir(self.directory)
 
         return {'FINISHED'}
 
-    def invoke(self, context, event):
+    def invoke(self, context, _event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
@@ -194,13 +174,13 @@ class BuildProject(bpy.types.Operator):
     bl_idname = 'panda_engine.build_project'
     bl_label = 'Build Project'
 
-    def execute(self, context):
+    def execute(self, _context):
         try:
             config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
             pman.build(config)
             return {'FINISHED'}
-        except pman.PManException as e:
-            self.report({'ERROR'}, e.value)
+        except pman.PManException as err:
+            self.report({'ERROR'}, str(err))
             return {'CANCELLED'}
 
 
@@ -209,19 +189,19 @@ class RunProject(bpy.types.Operator):
     bl_idname = 'panda_engine.run_project'
     bl_label = 'Run Project'
 
-    def execute(self, context):
+    def execute(self, _context):
         try:
             config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
             if config['run']['auto_save']:
                 bpy.ops.wm.save_mainfile()
             pman.run(config)
             return {'FINISHED'}
-        except pman.PManException as e:
-            self.report({'ERROR'}, e.value)
+        except pman.PManException as err:
+            self.report({'ERROR'}, str(err))
             return {'CANCELLED'}
 
 
-def menu_func_export(self, context):
+def menu_func_export(self, _context):
     self.layout.operator(ExportBam.bl_idname, text="Panda3D (.bam)")
 
 
