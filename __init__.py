@@ -1,14 +1,15 @@
 bl_info = { # pylint: disable=invalid-name
     "name": "Panda3D Integration",
     "author": "Mitchell Stokes",
-    "blender": (2, 74, 0),
+    "version": (0, 2, 0),
+    "blender": (2, 76, 0),
     "location": "Info header, render engine menu",
     "description": "Run Panda3D from inside Blender",
-    "warning": "",
-    "wiki_url": "",
-    "tracker_url": "",
+    "wiki_url": "https://github.com/Moguri/BlenderPanda",
+    "tracker_url": "https://github.com/Moguri/BlenderPanda/issues",
     "support": "COMMUNITY",
-    "category": "Render"}
+    "category": "Render"
+}
 
 
 if "bpy" in locals():
