@@ -244,6 +244,47 @@ def build(config=None):
 def run(config=None):
     PMan(config=config).run()
 
+
+class Converter:
+    def __init__(self, supported_exts, ext_dst_map=None):
+        self.supported_exts = supported_exts
+        self.ext_dst_map = ext_dst_map if ext_dst_map is not None else {}
+
+    def __call__(self, func):
+        func.supported_exts = self.supported_exts
+        func.ext_dst_map = self.ext_dst_map
+        return func
+
+
+@Converter(['.blend'], {'.blend': '.bam'})
+def converter_blend_bam(_config, user_config, srcdir, dstdir, _assets):
+    use_last_path = user_config.getboolean('blender', 'use_last_path')
+    blender_path = user_config.get('blender', 'last_path') if use_last_path else 'blender'
+    args = [
+        blender_path,
+        '-b',
+        '-P',
+        os.path.join(os.path.dirname(__file__), 'pman_build.py'),
+        '--',
+        srcdir,
+        dstdir,
+    ]
+
+    #print("Calling blender: {}".format(' '.join(args)))
+
+    subprocess.call(args, env=os.environ.copy())
+
+
+def converter_copy(_config, _user_config, srcdir, dstdir, assets):
+    for asset in assets:
+        src = asset
+        dst = src.replace(srcdir, dstdir)
+        print('Copying non-blend file from "{}" to "{}"'.format(src, dst))
+        if not os.path.exists(os.path.dirname(dst)):
+            os.makedirs(os.path.dirname(dst))
+        shutil.copyfile(src, dst)
+
+
 class PMan:
     def __init__(self, config=None, config_startdir=None):
         if config:
@@ -252,6 +293,12 @@ class PMan:
         else:
             self.config = get_config(config_startdir)
             self.user_config = get_user_config(config_startdir)
+
+        # TODO: Get these from config
+        self.converters = [
+            converter_blend_bam,
+        ]
+
 
     def get_abs_path(self, path):
         return os.path.join(
@@ -315,7 +362,16 @@ class PMan:
         ignore_patterns = [i.strip() for i in self.config.get('build', 'ignore_patterns').split(',')]
         print("Ignoring file patterns: {}".format(ignore_patterns))
 
-        num_blends = 0
+        # Gather files and group by extension
+        ext_asset_map = {}
+        ext_dst_map = {}
+        ext_converter_map = {}
+        for converter in self.converters:
+            print(ext_dst_map, converter.ext_dst_map)
+            ext_dst_map.update(converter.ext_dst_map)
+            for ext in converter.supported_exts:
+                ext_converter_map[ext] = converter
+
         for root, _dirs, files in os.walk(srcdir):
             for asset in files:
                 src = os.path.join(root, asset)
@@ -330,38 +386,30 @@ class PMan:
                     print('Skip building file {} that matched ignore pattern {}'.format(asset, ignore_pattern))
                     continue
 
-                if asset.endswith('.blend'):
-                    dst = dst.replace('.blend', '.bam')
+                ext = os.path.splitext(asset)[1]
+
+                if ext in ext_dst_map:
+                    dst = dst.replace(ext, ext_dst_map[ext])
 
                 if os.path.exists(dst) and os.stat(src).st_mtime <= os.stat(dst).st_mtime:
                     print('Skip building up-to-date file: {}'.format(dst))
                     continue
 
-                if asset.endswith('.blend'):
-                    # Handle with Blender
-                    num_blends += 1
-                else:
-                    print('Copying non-blend file from "{}" to "{}"'.format(src, dst))
-                    if not os.path.exists(os.path.dirname(dst)):
-                        os.makedirs(os.path.dirname(dst))
-                    shutil.copyfile(src, dst)
+                if ext not in ext_asset_map:
+                    ext_asset_map[ext] = []
 
-        if num_blends > 0:
-            use_last_path = self.user_config.getboolean('blender', 'use_last_path')
-            blender_path = self.user_config.get('blender', 'last_path') if use_last_path else 'blender'
-            args = [
-                blender_path,
-                '-b',
-                '-P',
-                os.path.join(os.path.dirname(__file__), 'pman_build.py'),
-                '--',
-                srcdir,
-                dstdir,
-            ]
+                print('Adding {} to conversion list to satisfy {}'.format(src, dst))
+                ext_asset_map[ext].append(os.path.join(root, asset))
 
-            #print("Calling blender: {}".format(' '.join(args)))
+        # Run conversion hooks
+        for ext, converter in ext_converter_map.items():
+            if ext in ext_asset_map:
+                converter(self.config, self.user_config, srcdir, dstdir, ext_asset_map[ext])
+                del ext_asset_map[ext]
 
-            subprocess.call(args, env=os.environ.copy())
+        # Copy what is left
+        for ext in ext_asset_map:
+            converter_copy(self.config, self.user_config, srcdir, dstdir, ext_asset_map[ext])
 
         if hasattr(time, 'perf_counter'):
             etime = time.perf_counter()
