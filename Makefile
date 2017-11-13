@@ -4,7 +4,7 @@
 ver_str := v0.2.0
 
 lint:
-	pylint *.py
+	pylint *.py pman/*.py
 
 lint_templates:
 	pylint templates/*.py

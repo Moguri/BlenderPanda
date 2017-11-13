@@ -194,7 +194,8 @@ def create_project(projectdir):
     config = get_config(projectdir)
     write_config(config)
 
-    templatedir = os.path.join(os.path.dirname(__file__), 'templates')
+    pmandir = os.path.dirname(__file__)
+    templatedir = 'templates'
 
     print("Creating directories...")
 
@@ -207,8 +208,7 @@ def create_project(projectdir):
         os.path.join(templatedir, '__init__.py'),
         os.path.join(templatedir, 'bpbase.py'),
         'rendermanager.py',
-        'pman.py',
-        'pman_build.py',
+        'pman',
     ]
 
     dirs = [os.path.join(projectdir, i) for i in dirs]
@@ -221,7 +221,7 @@ def create_project(projectdir):
             os.mkdir(d)
 
     print("Creating main.py")
-    with open(os.path.join(templatedir, 'main.py')) as f:
+    with open(os.path.join(pmandir, '..', templatedir, 'main.py')) as f:
         main_data = f.read()
 
     mainpath = os.path.join(projectdir, 'game', 'main.py')
@@ -242,9 +242,13 @@ def create_project(projectdir):
     for copy_file in bpanda_mod_files:
         bname = os.path.basename(copy_file)
         print("\tCopying over {}".format(bname))
-        cfsrc = os.path.join(os.path.dirname(__file__), copy_file)
+        cfsrc = os.path.join(os.path.dirname(__file__), '..', copy_file)
         cfdst = os.path.join(projectdir, 'game', 'blenderpanda', bname)
-        shutil.copy(cfsrc, cfdst)
+        print(cfsrc, cfdst)
+        if os.path.isdir(cfsrc):
+            shutil.copytree(cfsrc, cfdst)
+        else:
+            shutil.copy(cfsrc, cfdst)
         print("\t\t{} created at {}".format(bname, cfdst))
 
 
