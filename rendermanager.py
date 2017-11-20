@@ -66,13 +66,13 @@ def create_render_manager(base, config=None):
             print("RenderManager: Could not find pman config, falling back to basic plugin")
             config = None
 
-    renderplugin = config.get('general', 'render_plugin') if config else ''
+    renderplugin = config['general']['render_plugin'] if config else ''
 
     if not renderplugin:
         return BasicRenderManager(base)
 
     rppath = pman.get_abs_path(config, renderplugin)
-    maindir = os.path.dirname(pman.get_abs_path(config, config.get('run', 'main_file')))
+    maindir = os.path.dirname(pman.get_abs_path(config, config['run']['main_file']))
     rppath = os.path.splitext(os.path.relpath(rppath, maindir))[0]
     module_parts = rppath.split(os.sep)
 

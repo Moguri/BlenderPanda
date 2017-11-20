@@ -93,7 +93,11 @@ def _get_config(startdir, conf_name, defaults):
 
             config.add_section('internal')
             config.set('internal', 'projectdir', os.path.dirname(configpath))
-            return config
+            confdict = {
+                s: dict(config.items(s))
+                for s in config.sections()
+            }
+            return confdict
 
         dirs.pop()
 
@@ -121,7 +125,7 @@ def get_user_config(startdir=None):
     except NoConfigError:
         # No user config, just create one
         config = get_config(startdir)
-        file_path = os.path.join(config.get('internal', 'projectdir'), '.pman.user')
+        file_path = os.path.join(config['internal']['projectdir'], '.pman.user')
         print("Creating user config at {}".format(file_path))
         open(file_path, 'w').close()
 
@@ -133,7 +137,7 @@ def _write_config(config, conf_name):
     writecfg.read_dict(config)
     writecfg.remove_section('internal')
 
-    with open(os.path.join(config.get('internal', 'projectdir'), conf_name), 'w') as f:
+    with open(os.path.join(config['internal']['projectdir'], conf_name), 'w') as f:
         writecfg.write(f)
 
 
@@ -259,7 +263,7 @@ class Converter:
 @Converter(['.blend'], {'.blend': '.bam'})
 def converter_blend_bam(_config, user_config, srcdir, dstdir, _assets):
     use_last_path = user_config.getboolean('blender', 'use_last_path')
-    blender_path = user_config.get('blender', 'last_path') if use_last_path else 'blender'
+    blender_path = user_config['blender']['last_path'] if use_last_path else 'blender'
     args = [
         blender_path,
         '-b',
@@ -289,7 +293,7 @@ class PMan:
     def __init__(self, config=None, config_startdir=None):
         if config:
             self.config = config
-            self.user_config = get_user_config(config.get('internal', 'projectdir'))
+            self.user_config = get_user_config(config['internal']['projectdir'])
         else:
             self.config = get_config(config_startdir)
             self.user_config = get_user_config(config_startdir)
@@ -302,12 +306,12 @@ class PMan:
 
     def get_abs_path(self, path):
         return os.path.join(
-            self.config.get('internal', 'projectdir'),
+            self.config['internal']['projectdir'],
             path
         )
 
     def get_rel_path(self, path):
-        return os.path.relpath(path, self.config.get('internal', 'projectdir'))
+        return os.path.relpath(path, self.config['internal']['projectdir'])
 
     def get_python_program(self):
         python_programs = [
@@ -346,8 +350,8 @@ class PMan:
             stime = time.time()
         print("Starting build")
 
-        srcdir = self.get_abs_path(self.config.get('build', 'asset_dir'))
-        dstdir = self.get_abs_path(self.config.get('build', 'export_dir'))
+        srcdir = self.get_abs_path(self.config['build']['asset_dir'])
+        dstdir = self.get_abs_path(self.config['build']['export_dir'])
 
         if not os.path.exists(srcdir):
             raise BuildError("Could not find asset directory: {}".format(srcdir))
@@ -359,7 +363,7 @@ class PMan:
         print("Read assets from: {}".format(srcdir))
         print("Export them to: {}".format(dstdir))
 
-        ignore_patterns = [i.strip() for i in self.config.get('build', 'ignore_patterns').split(',')]
+        ignore_patterns = [i.strip() for i in self.config['build']['ignore_patterns'].split(',')]
         print("Ignoring file patterns: {}".format(ignore_patterns))
 
         # Gather files and group by extension
@@ -420,8 +424,8 @@ class PMan:
         if is_frozen():
             raise FrozenEnvironmentError()
 
-        mainfile = self.get_abs_path(self.config.get('run', 'main_file'))
+        mainfile = self.get_abs_path(self.config['run']['main_file'])
         print("Running main file: {}".format(mainfile))
         args = [self.get_python_program(), mainfile]
         #print("Args: {}".format(args))
-        subprocess.Popen(args, cwd=self.config.get('internal', 'projectdir'))
+        subprocess.Popen(args, cwd=self.config['internal']['projectdir'])
