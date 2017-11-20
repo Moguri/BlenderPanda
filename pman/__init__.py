@@ -367,7 +367,6 @@ class PMan:
         ext_dst_map = {}
         ext_converter_map = {}
         for converter in self.converters:
-            print(ext_dst_map, converter.ext_dst_map)
             ext_dst_map.update(converter.ext_dst_map)
             for ext in converter.supported_exts:
                 ext_converter_map[ext] = converter
