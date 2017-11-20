@@ -20,7 +20,7 @@ def get_conf_prop(section, field, conf_type):
             value = pman.get_abs_path(config, config[section][field])
             value = bpy.path.relpath(value)
         elif conf_type == ConfTypes.boolean:
-            value = config.getboolean(section, field)
+            value = bool(config[section][field])
         else:
             raise TypeError("Unexpected conf_type {}".format(conf_type))
 

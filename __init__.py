@@ -21,7 +21,6 @@ if "bpy" in locals():
     imp.reload(ui)
     imp.reload(operators)
     imp.reload(properties)
-    imp.reload(rendermanager)
 else:
     import bpy
     import sys
@@ -33,7 +32,6 @@ else:
     from . import ui
     from . import operators
     from . import properties
-    from . import rendermanager
 
 @bpy.app.handlers.persistent
 def load_handler(_dummy):

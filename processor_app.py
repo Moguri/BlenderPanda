@@ -17,7 +17,6 @@ import panda3d.core as p3d
 import pman
 
 from converter import Converter
-import rendermanager
 
 
 p3d.load_prc_file_data(
@@ -199,7 +198,7 @@ class App(ShowBase):
         except pman.NoConfigError:
             pman_conf = None
 
-        self.rendermanager = rendermanager.create_render_manager(self, pman_conf)
+        self.rendermanager = pman.rendermanager.create_render_manager(self, pman_conf)
 
     def make_offscreen(self, sizex, sizey):
         sizex = p3d.Texture.up_to_power_2(sizex)

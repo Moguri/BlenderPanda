@@ -4,3 +4,6 @@
 [submodule "blendergltf"]
 	path = blendergltf
 	url = https://github.com/Kupoman/blendergltf.git
+[submodule "pman"]
+	path = pman
+	url = https://github.com/Moguri/pman.git
