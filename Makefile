@@ -4,10 +4,7 @@
 ver_str := v0.2.0
 
 lint:
-	pylint *.py pman/*.py
-
-lint_templates:
-	pylint templates/*.py
+	pylint *.py
 
 todos:
 	pylint -d all -e fixme *.py
