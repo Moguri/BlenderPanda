@@ -11,6 +11,18 @@ from .import blendergltf
 from . import pman
 
 
+_AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
+_GLTF_SETTINGS = {
+    'nodes_export_hidden': True,
+    'images_allow_srgb': True,
+    'asset_profile': 'DESKTOP',
+    'extension_exporters': [
+        _AVAILABLE_EXTENSIONS.khr_materials_common.KhrMaterialsCommon(),
+        _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),
+    ],
+}
+
+
 def update_blender_path():
     try:
         startdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
@@ -53,18 +65,10 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             self.report({'ERROR'}, str(err))
             return {'CANCELLED'}
 
-        available_extensions = blendergltf.extension_exporters
-        gltf_settings = {
-            'gltf_output_dir': os.path.dirname(self.filepath),
-            'images_data_storage': 'COPY' if self.copy_images else 'REFERENCE',
-            'nodes_export_hidden': True,
-            'images_allow_srgb': True,
-            'asset_profile': 'DESKTOP',
-            'extension_exporters': [
-                available_extensions.khr_materials_common.KhrMaterialsCommon(),
-                available_extensions.blender_physics.BlenderPhysics(),
-            ],
-        }
+        gltf_settings = _GLTF_SETTINGS.copy()
+        gltf_settings['gltf_output_dir'] = os.path.dirname(self.filepath)
+        gltf_settings['images_data_storage'] = 'COPY' if self.copy_images else 'REFERENCE'
+
         collections_list = engine.DEFAULT_WATCHLIST + ['actions']
         scene_delta = {
             cname: list(getattr(bpy.data, cname))
