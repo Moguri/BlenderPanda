@@ -521,6 +521,14 @@ class Converter():
         for uv_layer in uv_layers:
             vert_array.add_column(InternalName.get_texcoord_name(uv_layer), 2, GeomEnums.NTFloat32, GeomEnums.CTexcoord)
 
+        col_layers = [
+            i.replace('COLOR_', '')
+            for i in gltf_mesh['primitives'][0]['attributes']
+            if i.startswith('COLOR_')
+        ]
+        for col_layer in col_layers:
+            vert_array.add_column(InternalName.get_color().append(col_layer), 3, GeomEnums.NTFloat32, GeomEnums.CColor)
+
         #reg_format = GeomVertexFormat.register_format(GeomVertexFormat(vert_array))
         vformat = GeomVertexFormat()
         vformat.add_array(vert_array)
