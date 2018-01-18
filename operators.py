@@ -16,6 +16,7 @@ _GLTF_SETTINGS = {
     'nodes_export_hidden': True,
     'images_allow_srgb': True,
     'asset_profile': 'DESKTOP',
+    'asset_version': '1.0',
     'extension_exporters': [
         _AVAILABLE_EXTENSIONS.khr_materials_common.KhrMaterialsCommon(),
         _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),

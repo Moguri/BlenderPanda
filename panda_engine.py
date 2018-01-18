@@ -25,6 +25,7 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
         gltf_settings = operators._GLTF_SETTINGS.copy()
         gltf_settings['images_data_storage'] = 'REFERENCE'
         gltf_settings['meshes_apply_modifiers'] = False # Cannot be done in a thread
+        gltf_settings['hacks_streaming'] = True
 
         super().__init__(
             converter=BTFConverter(gltf_settings),

@@ -104,40 +104,43 @@ class Converter():
                 if HAVE_BULLET and 'BLENDER_physics' in gltf_node['extensions']:
                     phy = gltf_node['extensions']['BLENDER_physics']
                     shape = None
-                    radius = max(phy['boundingBox'][0], phy['boundingBox'][1]) / 2.0
-                    height = phy['boundingBox'][2]
+                    collision_shape = phy['collisionShapes'][0]
+                    bounding_box = collision_shape['boundingBox']
+                    radius = max(bounding_box[0], bounding_box[1]) / 2.0
+                    height = bounding_box[2]
                     geomnode = None
                     static = 'static' in phy and phy['static']
-                    if 'mesh' in phy:
+                    if 'mesh' in collision_shape:
                         try:
-                            geomnode = self.meshes[phy['mesh']]
+                            geomnode = self.meshes[collision_shape['mesh']]
                         except KeyError:
-                            print("Could not find physics mesh ({}) for object ({})".format(phy['mesh'], nodeid))
+                            print("Could not find physics mesh ({}) for object ({})".format(collision_shape['mesh'], nodeid))
 
-                    if phy['collisionShape'] == 'BOX':
-                        shape = bullet.BulletBoxShape(LVector3(*phy['boundingBox']) / 2.0)
-                    elif phy['collisionShape'] == 'SPHERE':
-                        shape = bullet.BulletSphereShape(max(phy['boundingBox']) / 2.0)
-                    elif phy['collisionShape'] == 'CAPSULE':
+                    shape_type = collision_shape['shapeType']
+                    if shape_type == 'BOX':
+                        shape = bullet.BulletBoxShape(LVector3(*bounding_box) / 2.0)
+                    elif shape_type == 'SPHERE':
+                        shape = bullet.BulletSphereShape(max(bounding_box) / 2.0)
+                    elif shape_type == 'CAPSULE':
                         shape = bullet.BulletCapsuleShape(radius, height - 2.0 * radius, bullet.ZUp)
-                    elif phy['collisionShape'] == 'CYLINDER':
+                    elif shape_type == 'CYLINDER':
                         shape = bullet.BulletCylinderShape(radius, height, bullet.ZUp)
-                    elif phy['collisionShape'] == 'CONE':
+                    elif shape_type == 'CONE':
                         shape = bullet.BulletConeShape(radius, height, bullet.ZUp)
-                    elif phy['collisionShape'] == 'CONVEX_HULL':
+                    elif shape_type == 'CONVEX_HULL':
                         if geomnode:
                             shape = bullet.BulletConvexHullShape()
 
                             for geom in geomnode.get_geoms():
                                 shape.add_geom(geom)
-                    elif phy['collisionShape'] == 'MESH':
+                    elif shape_type == 'MESH':
                         if geomnode:
                             mesh = bullet.BulletTriangleMesh()
                             for geom in geomnode.get_geoms():
                                 mesh.add_geom(geom)
                             shape = bullet.BulletTriangleMeshShape(mesh, dynamic=not static)
                     else:
-                        print("Unknown collision shape ({}) for object ({})".format(phy['collisionShape'], nodeid))
+                        print("Unknown collision shape ({}) for object ({})".format(shape_type, nodeid))
 
                     if shape is not None:
                         phynode = bullet.BulletRigidBodyNode(gltf_node['name'])
@@ -218,6 +221,10 @@ class Converter():
         return quat.get_hpr()
 
     def load_texture(self, texid, gltf_tex, gltf_data):
+        if 'source' not in gltf_tex:
+           print("Texture '{}' has no source, skipping".format(gltf_tex['name']))
+           return
+
         source = gltf_data['images'][gltf_tex['source']]
         uri = Filename.fromOsSpecific(source['uri'])
         texture = TexturePool.load_texture(uri, 0, False, LoaderOptions())
