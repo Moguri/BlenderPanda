@@ -81,7 +81,7 @@ class Server(threading.Thread):
 
                 self.data_handler(data)
 
-                self.socket.send(struct.pack('B', 0))
+                self.socket.sendall(struct.pack('B', 0))
             elif msg_id == 1:
                 #start = time.perf_counter()
                 dt = struct.unpack('=f', self.socket.recv(4))[0]
@@ -90,7 +90,7 @@ class Server(threading.Thread):
                 width, height, img_buffer = self.update_handler(dt)
 
                 #print('Extern: width {}, height {}, len(img_buffer) {}'.format(width, height, len(img_buffer)))
-                self.socket.send(struct.pack('=HH', width, height))
+                self.socket.sendall(struct.pack('=HH', width, height))
                 self.socket.sendall(img_buffer)
                 self.image_lock.release()
                 #transfer_t = time.perf_counter() - start
@@ -99,7 +99,7 @@ class Server(threading.Thread):
                 #print('Extern: Speed: {} Gbit/s'.format(data_size/1024/1024/1024*8 / transfer_t))
             else:
                 print('Received unknown message ID: {}'.format(msg_id))
-                self.socket.send(struct.pack('=B', 0))
+                self.socket.sendall(struct.pack('=B', 0))
 
             if not USE_THREAD:
                 break
