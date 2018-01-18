@@ -21,6 +21,7 @@ class Converter():
         self.mat_mesh_map = {}
         self.meshes = {}
         self.nodes = {}
+        self.node_paths = {}
         self.scenes = {}
         self.characters = {}
 
@@ -30,6 +31,9 @@ class Converter():
         self.active_camera = None
 
     def update(self, gltf_data, writing_bam=False):
+        #import pprint
+        #pprint.pprint(gltf_data)
+
         # Convert data
         for camid, gltf_cam in gltf_data.get('cameras', {}).items():
             self.load_camera(camid, gltf_cam)
@@ -70,12 +74,9 @@ class Converter():
             if 'extras' in gltf_scene and 'hidden_nodes' in gltf_scene['extras']:
                 if nodeid in gltf_scene['extras']['hidden_nodes']:
                     panda_node = panda_node.make_copy()
-            np = root.attach_new_node(panda_node)
 
-
-            np.set_pos(*gltf_node.get('translation', [0, 0, 0]))
-            np.set_hpr(self.load_quaternion_as_hpr(gltf_node.get('rotation', [0, 0, 0, 1])))
-            np.set_scale(*gltf_node.get('scale', [1, 1, 1]))
+            np = self.node_paths.get(nodeid, root.attach_new_node(panda_node))
+            self.node_paths[nodeid] = np
 
             if 'meshes' in gltf_node:
                 np_tmp = np
@@ -196,6 +197,14 @@ class Converter():
                 add_node(scene_root, gltf_scene, nodeid)
 
             self.scenes[sceneid] = scene_root
+
+        # Update node transforms
+        for nodeid, gltf_node in gltf_data.get('nodes', {}).items():
+            np = self.node_paths[nodeid]
+            np.set_pos(*gltf_node.get('translation', [0, 0, 0]))
+            np.set_hpr(self.load_quaternion_as_hpr(gltf_node.get('rotation', [0, 0, 0, 1])))
+            np.set_scale(*gltf_node.get('scale', [1, 1, 1]))
+
 
         # Set the active scene
         sceneid = gltf_data.get('scene', None)
