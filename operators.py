@@ -12,7 +12,7 @@ from . import pman
 
 
 _AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
-_GLTF_SETTINGS = {
+GLTF_SETTINGS = {
     'nodes_export_hidden': True,
     'images_allow_srgb': True,
     'asset_profile': 'DESKTOP',
@@ -66,7 +66,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             self.report({'ERROR'}, str(err))
             return {'CANCELLED'}
 
-        gltf_settings = _GLTF_SETTINGS.copy()
+        gltf_settings = GLTF_SETTINGS.copy()
         gltf_settings['gltf_output_dir'] = os.path.dirname(self.filepath)
         gltf_settings['images_data_storage'] = 'COPY' if self.copy_images else 'REFERENCE'
 

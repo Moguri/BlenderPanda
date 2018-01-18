@@ -222,8 +222,8 @@ class Converter():
 
     def load_texture(self, texid, gltf_tex, gltf_data):
         if 'source' not in gltf_tex:
-           print("Texture '{}' has no source, skipping".format(gltf_tex['name']))
-           return
+            print("Texture '{}' has no source, skipping".format(gltf_tex['name']))
+            return
 
         source = gltf_data['images'][gltf_tex['source']]
         uri = Filename.fromOsSpecific(source['uri'])

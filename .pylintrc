@@ -32,7 +32,9 @@ unsafe-load-any-extension=no
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code
-extension-pkg-whitelist=panda3d
+# TODO: figure out why panda3d segfaults
+#extension-pkg-whitelist=panda3d
+extension-pkg-whitelist=
 
 # Allow optimization of some AST trees. This will activate a peephole AST
 # optimizer, which will apply various small optimizations. For instance, it can
@@ -65,7 +67,8 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=missing-docstring,r,unused-wildcard-import,import-error,fixme
+# TODO: Remove c-extension-no-member and undefined-variable when import panda3d works again
+disable=missing-docstring,r,unused-wildcard-import,import-error,fixme,c-extension-no-member,undefined-variable
 
 
 [REPORTS]
