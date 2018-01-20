@@ -198,8 +198,10 @@ class Converter():
 
             self.scenes[sceneid] = scene_root
 
-        # Update node transforms
+        # Update node transforms for glTF nodes that have a NodePath
         for nodeid, gltf_node in gltf_data.get('nodes', {}).items():
+            if nodeid not in self.node_paths:
+                continue
             np = self.node_paths[nodeid]
             np.set_pos(*gltf_node.get('translation', [0, 0, 0]))
             np.set_hpr(self.load_quaternion_as_hpr(gltf_node.get('rotation', [0, 0, 0, 1])))
