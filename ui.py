@@ -24,6 +24,7 @@ class PandaRender_PT_project(PandaButtonsPanel, bpy.types.Panel):
         project_settings = context.scene.panda_project
 
         layout.prop(project_settings, 'project_name')
+        layout.prop(project_settings, 'python_binary')
         layout.prop(project_settings, 'render_plugin')
         layout.operator(operators.UpdateProject.bl_idname)
 

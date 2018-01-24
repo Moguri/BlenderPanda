@@ -9,15 +9,21 @@ class ConfTypes(Enum):
     path = 2
     boolean = 3
 
-def get_conf_prop(section, field, conf_type):
+def get_conf_prop(section, field, conf_type, user_conf=False):
     def f(_self):
-        config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+        confdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+        project_conf = pman.get_config(confdir)
+
+        if user_conf:
+            config = pman.get_user_config(confdir)
+        else:
+            config = project_conf
 
         if conf_type == ConfTypes.string:
             value = config[section][field]
         elif conf_type == ConfTypes.path:
             # Convert from pman path to Blender path
-            value = pman.get_abs_path(config, config[section][field])
+            value = pman.get_abs_path(project_conf, config[section][field])
             value = bpy.path.relpath(value)
         elif conf_type == ConfTypes.boolean:
             value = config[section][field]
@@ -29,17 +35,27 @@ def get_conf_prop(section, field, conf_type):
     return f
 
 
-def set_conf_prop(section, field, conf_type=ConfTypes.string):
+def set_conf_prop(section, field, conf_type=ConfTypes.string, user_conf=False):
     def f(_self, value):
-        config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+        confdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+        project_conf = pman.get_config(confdir)
+
+        if user_conf:
+            config = pman.get_user_config(confdir)
+        else:
+            config = project_conf
+
         if conf_type == ConfTypes.path:
             # Convert from Blender path to pman path
             value = bpy.path.abspath(value)
-            config[section][field] = pman.get_rel_path(config, value)
+            config[section][field] = pman.get_rel_path(project_conf, value)
         else:
             config[section][field] = value
         #print("SET CONF", section, field, value)
-        pman.write_config(config)
+        if user_conf:
+            pman.write_user_config(config)
+        else:
+            pman.write_config(config)
     return f
 
 
@@ -57,6 +73,14 @@ class PandaProjectSettings(bpy.types.PropertyGroup):
             description="The name of the current project",
             get=get_conf_prop('general', 'name', ConfTypes.string),
             set=set_conf_prop('general', 'name'),
+        )
+
+        cls.python_binary = bpy.props.StringProperty(
+            name="Python Binary",
+            description="Path to the Python binary to use when building and running projects",
+            subtype='FILE_PATH',
+            get=get_conf_prop('python', 'path', ConfTypes.path, user_conf=True),
+            set=set_conf_prop('python', 'path', ConfTypes.path, user_conf=True),
         )
 
         cls.render_plugin = bpy.props.StringProperty(
