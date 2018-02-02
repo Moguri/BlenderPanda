@@ -348,11 +348,16 @@ class Converter():
 
             def extract_chan_data(path):
                 vals = []
-                acc = [
+                accessors = [
                     gltf_data['accessors'][samplers[chan['sampler']]]
                     for chan in channels
                     if chan['target']['path'] == path
-                ][0]
+                ]
+
+                if not accessors:
+                    return vals
+
+                acc = accessors[0]
 
                 buff_view = gltf_data['bufferViews'][acc['bufferView']]
                 buff = gltf_data['buffers'][buff_view['buffer']]
