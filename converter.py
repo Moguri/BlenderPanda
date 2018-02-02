@@ -428,8 +428,6 @@ class Converter():
         skeleton = PartGroup(bundle, "<skeleton>")
         jvtmap = {}
 
-        bind_shape_mat = self.load_matrix(gltf_skin['bindShapeMatrix'])
-        bind_shape_mat.invert_in_place()
         bind_mats = []
         ibmacc = gltf_data['accessors'][gltf_skin['inverseBindMatrices']]
         ibmbv = gltf_data['bufferViews'][ibmacc['bufferView']]
@@ -439,7 +437,6 @@ class Converter():
         for i in range(ibmacc['count']):
             mat = struct.unpack_from('<{}'.format('f'*16), ibmdata, i * 16 * 4)
             #print('loaded', mat)
-            #mat = bind_shape_mat * self.load_matrix(mat)
             mat = self.load_matrix(mat)
             mat.invert_in_place()
             bind_mats.append(mat)
@@ -455,8 +452,7 @@ class Converter():
                 joint_mat = bind_mats[joint_index]
 
             # glTF uses an absolute bind pose, Panda wants it local
-            # also take this opportunity to bake in the bind shape matrix
-            bind_pose = joint_mat * bind_shape_mat * inv_transform
+            bind_pose = joint_mat * inv_transform
             joint = CharacterJoint(character, bundle, parent, node['name'], bind_pose)
 
             # Non-deforming bones are not in the skin's jointNames, don't add them to the jvtmap
