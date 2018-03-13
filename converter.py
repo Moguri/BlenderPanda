@@ -603,6 +603,8 @@ class Converter():
             num_verts = iacc['count']
             if iacc['componentType'] == 5123:
                 prim.set_index_type(GeomEnums.NTUint16)
+            else:
+                prim.set_index_type(GeomEnums.NTUint32)
             handle = prim.modify_vertices(num_verts).modify_handle()
             handle.unclean_set_num_rows(num_verts)
 
