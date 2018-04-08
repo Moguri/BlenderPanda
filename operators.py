@@ -17,6 +17,7 @@ GLTF_SETTINGS = {
     'images_allow_srgb': True,
     'asset_profile': 'DESKTOP',
     'asset_version': '1.0',
+    'nodes_global_matrix_apply': False,
     'extension_exporters': [
         _AVAILABLE_EXTENSIONS.khr_materials_common.KhrMaterialsCommon(),
         _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),
