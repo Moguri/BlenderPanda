@@ -337,7 +337,8 @@ class Converter():
             for samplerid, sampler in gltf_anim['samplers'].items()
         }
 
-        bundle = AnimBundle(character.get_name(), fps, num_frames)
+        bundle_name = '_'.join(gltf_anim['name'].split('_')[1:])
+        bundle = AnimBundle(bundle_name, fps, num_frames)
         skeleton = AnimGroup(bundle, '<skeleton>')
 
         def create_anim_channel(parent, boneid):
