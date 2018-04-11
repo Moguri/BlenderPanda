@@ -435,6 +435,8 @@ class Converter():
         ibmbuff = gltf_data['buffers'][ibmbv['buffer']]
         ibmdata = base64.b64decode(ibmbuff['uri'].split(',')[1])
 
+        joint_names = set()
+
         for i in range(ibmacc['count']):
             mat = struct.unpack_from('<{}'.format('f'*16), ibmdata, i * 16 * 4)
             #print('loaded', mat)
@@ -460,6 +462,7 @@ class Converter():
             if joint_index is not None:
                 jvtmap[joint_index] = JointVertexTransform(joint)
 
+            joint_names.add('nodes_{}'.format(node['name']))
 
             for child in node.get('children', []):
                 #print("Create joint for child", child)
@@ -475,7 +478,7 @@ class Converter():
         anims = [
             anim
             for anim in gltf_data.get('animations', {}).values()
-            if skel_name in {chan['target']['id'] for chan in anim['channels']}
+            if joint_names & {chan['target']['id'] for chan in anim['channels']}
         ]
 
         if anims:
