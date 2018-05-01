@@ -446,6 +446,8 @@ class Converter():
 
         def create_joint(parent, node, transform):
             #print("Creating joint for:", node['name'])
+            if 'jointName' not in node:
+                return
             inv_transform = LMatrix4(transform)
             inv_transform.invert_in_place()
             joint_index = None
