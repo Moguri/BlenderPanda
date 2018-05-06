@@ -13,10 +13,7 @@ from . import pman
 
 _AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
 GLTF_SETTINGS = {
-    'nodes_export_hidden': True,
-    'images_allow_srgb': True,
     'asset_profile': 'DESKTOP',
-    'asset_version': '1.0',
     'nodes_global_matrix_apply': False,
     'extension_exporters': [
         _AVAILABLE_EXTENSIONS.khr_materials_common.KhrMaterialsCommon(),
@@ -70,6 +67,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         gltf_settings = GLTF_SETTINGS.copy()
         gltf_settings['gltf_output_dir'] = os.path.dirname(self.filepath)
         gltf_settings['images_data_storage'] = 'COPY' if self.copy_images else 'REFERENCE'
+        gltf_settings['nodes_export_hidden'] = True
 
         collections_list = engine.DEFAULT_WATCHLIST + ['actions']
         scene_delta = {
@@ -91,7 +89,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         # Now convert the data to bam
         gltf_fname = self.filepath + '.gltf'
         with open(gltf_fname, 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4)
 
         args = [
             pycmd,
@@ -101,7 +99,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         ]
 
         subprocess.call(args, env=os.environ.copy())
-        os.remove(gltf_fname)
+        #os.remove(gltf_fname)
         return {'FINISHED'}
 
 

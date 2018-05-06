@@ -3,6 +3,7 @@ from __future__ import print_function
 import math
 import base64
 import struct
+import pprint
 
 from panda3d.core import * # pylint: disable=wildcard-import
 try:
@@ -25,33 +26,34 @@ class Converter():
         self.scenes = {}
         self.characters = {}
 
+        self._joint_nodes = set()
+
         # Scene props
         self.active_scene = NodePath(ModelRoot('default'))
         self.background_color = (0, 0, 0)
         self.active_camera = None
 
     def update(self, gltf_data, writing_bam=False):
-        #import pprint
         #pprint.pprint(gltf_data)
 
         # Convert data
-        for camid, gltf_cam in gltf_data.get('cameras', {}).items():
+        for camid, gltf_cam in enumerate(gltf_data.get('cameras', [])):
             self.load_camera(camid, gltf_cam)
 
         if 'extensions' in gltf_data and 'KHR_materials_common' in gltf_data['extensions']:
-            for lightid, gltf_light in gltf_data['extensions']['KHR_materials_common'].get('lights', {}).items():
+            for lightid, gltf_light in enumerate(gltf_data['extensions']['KHR_materials_common'].get('lights', [])):
                 self.load_light(lightid, gltf_light)
 
-        for texid, gltf_tex in gltf_data.get('textures', {}).items():
+        for texid, gltf_tex in enumerate(gltf_data.get('textures', [])):
             self.load_texture(texid, gltf_tex, gltf_data)
 
-        for matid, gltf_mat in gltf_data.get('materials', {}).items():
+        for matid, gltf_mat in enumerate(gltf_data.get('materials', [])):
             self.load_material(matid, gltf_mat)
 
-        for meshid, gltf_mesh in gltf_data.get('meshes', {}).items():
+        for meshid, gltf_mesh in enumerate(gltf_data.get('meshes', [])):
             self.load_mesh(meshid, gltf_mesh, gltf_data)
 
-        for nodeid, gltf_node in gltf_data.get('nodes', {}).items():
+        for nodeid, gltf_node in enumerate(gltf_data.get('nodes', [])):
             node = self.nodes.get(nodeid, PandaNode(gltf_node['name']))
             self.nodes[nodeid] = node
 
@@ -61,12 +63,13 @@ class Converter():
 
         # Build scenegraphs
         def add_node(root, gltf_scene, nodeid):
-            if nodeid not in gltf_data['nodes']:
-                print("Could not find node with id: {}".format(nodeid))
+            try:
+                gltf_node = gltf_data['nodes'][nodeid]
+            except IndexError:
+                print("Could not find node with index: {}".format(nodeid))
                 return
 
-            gltf_node = gltf_data['nodes'][nodeid]
-            if 'jointName' in gltf_node:
+            if gltf_node['name'] in self._joint_nodes:
                 # don't handle joints here
                 return
             panda_node = self.nodes[nodeid]
@@ -78,16 +81,15 @@ class Converter():
             np = self.node_paths.get(nodeid, root.attach_new_node(panda_node))
             self.node_paths[nodeid] = np
 
-            if 'meshes' in gltf_node:
+            if 'mesh' in gltf_node:
                 np_tmp = np
 
-                if 'skeletons' in gltf_node:
+                if 'skin' in gltf_node:
                     char = self.characters[gltf_node['name']]
                     np_tmp = np.attach_new_node(char)
 
-                for meshid in gltf_node['meshes']:
-                    mesh = self.meshes[meshid]
-                    np_tmp.attach_new_node(mesh)
+                mesh = self.meshes[gltf_node['mesh']]
+                np_tmp.attach_new_node(mesh)
             if 'camera' in gltf_node:
                 camid = gltf_node['camera']
                 cam = self.cameras[camid]
@@ -186,7 +188,7 @@ class Converter():
                     tmp.set_attrib(CullFaceAttrib.make_reverse())
                     geomnode.reparent_to(tmp)
 
-        for sceneid, gltf_scene in gltf_data.get('scenes', {}).items():
+        for sceneid, gltf_scene in enumerate(gltf_data.get('scenes', [])):
             scene_root = NodePath(ModelRoot(gltf_scene['name']))
 
             node_list = gltf_scene['nodes']
@@ -199,7 +201,7 @@ class Converter():
             self.scenes[sceneid] = scene_root
 
         # Update node transforms for glTF nodes that have a NodePath
-        for nodeid, gltf_node in gltf_data.get('nodes', {}).items():
+        for nodeid, gltf_node in enumerate(gltf_data.get('nodes', [])):
             if nodeid not in self.node_paths:
                 continue
             np = self.node_paths[nodeid]
@@ -315,8 +317,9 @@ class Converter():
 
         self.mat_states[matid] = state
 
-    def create_anim(self, character, skel_name, gltf_anim, gltf_data):
-        root_bone = gltf_data['nodes'][skel_name]
+    def create_anim(self, character, root_bone_id, gltf_anim, gltf_data):
+        samplers = gltf_anim['samplers']
+
         if 'extras' in gltf_data['scenes'][gltf_data['scene']]:
             fps = gltf_data['scenes'][gltf_data['scene']].get('frames_per_second', 30)
         else:
@@ -324,18 +327,8 @@ class Converter():
 
         # Blender exports the same number of elements in each time parameter, so find
         # one and assume that the number of elements is the number of frames
-        num_frames = [
-            gltf_data['accessors'][accid]['count']
-            for param, accid in gltf_anim['parameters'].items()
-            if 'time_parameter' in param
-        ][0]
-
-        # Create a simpler samplers dict so we don't have to keep looking
-        # up parameters
-        samplers = {
-            samplerid: gltf_anim['parameters'][sampler['output']]
-            for samplerid, sampler in gltf_anim['samplers'].items()
-        }
+        time_acc_id = samplers[0]['input']
+        num_frames = gltf_data['accessors'][time_acc_id]['count']
 
         bundle_name = '_'.join(gltf_anim['name'].split('_')[1:])
         bundle = AnimBundle(bundle_name, fps, num_frames)
@@ -343,14 +336,14 @@ class Converter():
 
         def create_anim_channel(parent, boneid):
             bone = gltf_data['nodes'][boneid]
-            channels = [chan for chan in gltf_anim['channels'] if chan['target']['id'] == boneid]
+            channels = [chan for chan in gltf_anim['channels'] if chan['target']['node'] == boneid]
 
             group = AnimChannelMatrixXfmTable(parent, bone['name'])
 
             def extract_chan_data(path):
                 vals = []
                 accessors = [
-                    gltf_data['accessors'][samplers[chan['sampler']]]
+                    gltf_data['accessors'][samplers[chan['sampler']]['output']]
                     for chan in channels
                     if chan['target']['path'] == path
                 ]
@@ -416,15 +409,15 @@ class Converter():
             for childid in bone.get('children', []):
                 create_anim_channel(group, childid)
 
-        create_anim_channel(skeleton, skel_name)
-        character.add_child(AnimBundleNode(root_bone['name'], bundle))
+        create_anim_channel(skeleton, root_bone_id)
+        character.add_child(AnimBundleNode(character.name, bundle))
 
-    def create_character(self, gltf_node, gltf_skin, gltf_mesh, gltf_data):
+    def create_character(self, nodeid, gltf_node, gltf_skin, gltf_data):
         #print("Creating skinned mesh for", gltf_mesh['name'])
-        skel_name = gltf_node['skeletons'][0]
-        root = gltf_data['nodes'][skel_name]
+        root = gltf_data['nodes'][gltf_skin['skeleton']]
+        skel_name = root['name']
 
-        character = Character(gltf_mesh['name'])
+        character = Character(gltf_node['name'])
         bundle = character.get_bundle(0)
         skeleton = PartGroup(bundle, "<skeleton>")
         jvtmap = {}
@@ -435,7 +428,7 @@ class Converter():
         ibmbuff = gltf_data['buffers'][ibmbv['buffer']]
         ibmdata = base64.b64decode(ibmbuff['uri'].split(',')[1])
 
-        joint_names = set()
+        joint_ids = set()
 
         for i in range(ibmacc['count']):
             mat = struct.unpack_from('<{}'.format('f'*16), ibmdata, i * 16 * 4)
@@ -444,15 +437,15 @@ class Converter():
             mat.invert_in_place()
             bind_mats.append(mat)
 
-        def create_joint(parent, node, transform):
-            #print("Creating joint for:", node['name'])
+        def create_joint(parent, nodeid, node, transform):
             inv_transform = LMatrix4(transform)
             inv_transform.invert_in_place()
             joint_index = None
             joint_mat = LMatrix4.ident_mat()
-            if node['jointName'] in gltf_skin['jointNames']:
-                joint_index = gltf_skin['jointNames'].index(node['jointName'])
+            if nodeid in gltf_skin['joints']:
+                joint_index = gltf_skin['joints'].index(nodeid)
                 joint_mat = bind_mats[joint_index]
+                self._joint_nodes.add(node['name'])
 
             # glTF uses an absolute bind pose, Panda wants it local
             bind_pose = joint_mat * inv_transform
@@ -462,30 +455,31 @@ class Converter():
             if joint_index is not None:
                 jvtmap[joint_index] = JointVertexTransform(joint)
 
-            joint_names.add('nodes_{}'.format(node['name']))
+            joint_ids.add(nodeid)
+            #joint_names.add('nodes_{}'.format(node['name']))
 
             for child in node.get('children', []):
                 #print("Create joint for child", child)
                 bone_node = gltf_data['nodes'][child]
-                create_joint(joint, bone_node, bind_pose * transform)
+                create_joint(joint, child, bone_node, bind_pose * transform)
 
-        create_joint(skeleton, root, LMatrix4.ident_mat())
+        create_joint(skeleton, gltf_skin['skeleton'], root, LMatrix4.ident_mat())
         #print("Adding skinned mesh to", gltf_node['name'])
         self.characters[gltf_node['name']] = character
 
         # convert animations
-        #print("Looking for actions for", skel_name)
+        #print("Looking for actions for", gltf_node['name'], joint_ids)
         anims = [
             anim
-            for anim in gltf_data.get('animations', {}).values()
-            if joint_names & {chan['target']['id'] for chan in anim['channels']}
+            for anim in gltf_data.get('animations', [])
+            if joint_ids & {chan['target']['node'] for chan in anim['channels']}
         ]
 
         if anims:
             #print("Found anims for", gltf_node['name'])
             for gltf_anim in anims:
                 #print("\t", gltf_anim['name'])
-                self.create_anim(character, skel_name, gltf_anim, gltf_data)
+                self.create_anim(character, gltf_skin['skeleton'], gltf_anim, gltf_data)
 
         return jvtmap
 
@@ -498,7 +492,7 @@ class Converter():
 
         # Check for skinning data
         mesh_attribs = gltf_mesh['primitives'][0]['attributes']
-        is_skinned = 'WEIGHT' in mesh_attribs
+        is_skinned = 'WEIGHTS_0' in mesh_attribs
 
         # Describe the vertex data
         vert_array = GeomVertexArrayFormat()
@@ -507,15 +501,15 @@ class Converter():
 
         if is_skinned:
             # Find all nodes that use this mesh and try to find a skin
-            gltf_nodes = [
-                gltf_node
-                for gltf_node in gltf_data['nodes'].values()
-                if 'meshes' in gltf_node and meshid in gltf_node['meshes']
-            ]
-            gltf_node = [gltf_node for gltf_node in gltf_nodes if 'skin' in gltf_node][0]
+            nodeid, gltf_node = [
+                (i, gltf_node)
+                for i, gltf_node in enumerate(gltf_data['nodes'])
+                if 'mesh' in gltf_node and meshid == gltf_node['mesh'] and 'skin' in gltf_node
+            ][0]
+            #gltf_node = [gltf_node for gltf_node in gltf_nodes if 'skin' in gltf_node][0]
             gltf_skin = gltf_data['skins'][gltf_node['skin']]
 
-            jvtmap = self.create_character(gltf_node, gltf_skin, gltf_mesh, gltf_data)
+            jvtmap = self.create_character(nodeid, gltf_node, gltf_skin, gltf_data)
             tb_va = GeomVertexArrayFormat()
             tb_va.add_column(InternalName.get_transform_blend(), 1, GeomEnums.NTUint16, GeomEnums.CIndex)
             tbtable = TransformBlendTable()
@@ -573,7 +567,7 @@ class Converter():
         if is_skinned:
             tdata = GeomVertexWriter(vdata, InternalName.get_transform_blend())
 
-            sacc = gltf_data['accessors'][mesh_attribs['WEIGHT']]
+            sacc = gltf_data['accessors'][mesh_attribs['WEIGHTS_0']]
             sbv = gltf_data['bufferViews'][sacc['bufferView']]
             sbuff = gltf_data['buffers'][sbv['buffer']]
             sbuff_data = base64.b64decode(sbuff['uri'].split(',')[1])
