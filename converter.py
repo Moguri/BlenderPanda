@@ -229,6 +229,19 @@ class Converter():
             lmat.set_row(i, LVecBase4(*mat[i * 4: i * 4 + 4]))
         return lmat
 
+    def decompose_matrix(self, mat):
+        mat = LMatrix4(mat)
+        translation = mat.get_row3(3)
+        mat.set_row(3, LVector3(0, 0, 0))
+        scale = [mat.get_row3(i).length() for i in range(3)]
+        for i in range(3):
+            mat.set_row(i, mat.get_row3(i) / scale[i])
+        rot_quat = LQuaternion()
+        rot_quat.set_from_matrix(mat.getUpper3())
+        rotation = rot_quat.get_hpr()
+
+        return translation, rotation, LVector3(*scale)
+
     def load_quaternion_as_hpr(self, quaternion):
         quat = LQuaternion(quaternion[3], quaternion[0], quaternion[1], quaternion[2])
         return quat.get_hpr()
@@ -334,24 +347,25 @@ class Converter():
         bundle = AnimBundle(bundle_name, fps, num_frames)
         skeleton = AnimGroup(bundle, '<skeleton>')
 
-        def create_anim_channel(parent, boneid):
+        def create_anim_channel(parent, boneid,):
             bone = gltf_data['nodes'][boneid]
             channels = [chan for chan in gltf_anim['channels'] if chan['target']['node'] == boneid]
+            joint_mat = character.find_joint(bone['name']).get_transform()
 
             group = AnimChannelMatrixXfmTable(parent, bone['name'])
 
-            def extract_chan_data(path):
-                vals = []
+            def get_accessor(path):
                 accessors = [
                     gltf_data['accessors'][samplers[chan['sampler']]['output']]
                     for chan in channels
                     if chan['target']['path'] == path
                 ]
 
-                if not accessors:
-                    return vals
+                return accessors[0] if accessors else None
 
-                acc = accessors[0]
+            def extract_chan_data(path):
+                vals = []
+                acc = get_accessor(path)
 
                 buff_view = gltf_data['bufferViews'][acc['bufferView']]
                 buff = gltf_data['buffers'][buff_view['buffer']]
@@ -361,15 +375,17 @@ class Converter():
 
                 if path == 'rotation':
                     data = [struct.unpack_from('<ffff', buff_data, idx) for idx in range(start, end, 4 * 4)]
-                    vals += [
+                    vals = [
                         [i[0] for i in data],
                         [i[1] for i in data],
                         [i[2] for i in data],
                         [i[3] for i in data]
                     ]
+                    #convert quats to hpr
+                    vals = list(zip(*[LQuaternion(i[3], i[0], i[1], i[2]).get_hpr() for i in zip(*vals)]))
                 else:
                     data = [struct.unpack_from('<fff', buff_data, idx) for idx in range(start, end, 3 * 4)]
-                    vals += [
+                    vals = [
                         [i[0] for i in data],
                         [i[1] for i in data],
                         [i[2] for i in data]
@@ -377,34 +393,32 @@ class Converter():
 
                 return vals
 
-            loc_vals = extract_chan_data('translation')
-            rot_vals = extract_chan_data('rotation')
-            scale_vals = extract_chan_data('scale')
+            # Create default animaton data
+            translation, rotation, scale = self.decompose_matrix(joint_mat)
+            loc_vals = list(zip(*[(translation.get_x(), translation.get_y(), translation.get_z()) for i in range(num_frames)]))
+            rot_vals = list(zip(*[(rotation.get_x(), rotation.get_y(), rotation.get_z()) for i in range(num_frames)]))
+            scale_vals = list(zip(*[(scale.get_x(), scale.get_y(), scale.get_z()) for i in range(num_frames)]))
 
-            if loc_vals:
-                group.set_table(b'x', CPTAFloat(PTAFloat(loc_vals[0])))
-                group.set_table(b'y', CPTAFloat(PTAFloat(loc_vals[1])))
-                group.set_table(b'z', CPTAFloat(PTAFloat(loc_vals[2])))
+            # Override defaults with any found animation data
+            if get_accessor('translation') is not None:
+                loc_vals = extract_chan_data('translation')
+            if get_accessor('rotation') is not None:
+                rot_vals = extract_chan_data('rotation')
+            if get_accessor('scale') is not None:
+                scale_vals = extract_chan_data('scale')
 
-            if rot_vals:
-                tableh = PTAFloat.empty_array(num_frames)
-                tablep = PTAFloat.empty_array(num_frames)
-                tabler = PTAFloat.empty_array(num_frames)
-                for i in range(num_frames):
-                    quat = LQuaternion(rot_vals[3][i], rot_vals[0][i], rot_vals[1][i], rot_vals[2][i])
-                    hpr = quat.get_hpr()
-                    tableh.set_element(i, hpr.get_x())
-                    tablep.set_element(i, hpr.get_y())
-                    tabler.set_element(i, hpr.get_z())
-                group.set_table(b'h', CPTAFloat(tableh))
-                group.set_table(b'p', CPTAFloat(tablep))
-                group.set_table(b'r', CPTAFloat(tabler))
+            # Write data to tables
+            group.set_table(b'x', CPTAFloat(PTAFloat(loc_vals[0])))
+            group.set_table(b'y', CPTAFloat(PTAFloat(loc_vals[1])))
+            group.set_table(b'z', CPTAFloat(PTAFloat(loc_vals[2])))
 
-            if scale_vals:
-                group.set_table(b'i', CPTAFloat(PTAFloat(scale_vals[0])))
-                group.set_table(b'j', CPTAFloat(PTAFloat(scale_vals[1])))
-                group.set_table(b'k', CPTAFloat(PTAFloat(scale_vals[2])))
+            group.set_table(b'h', CPTAFloat(PTAFloat(rot_vals[0])))
+            group.set_table(b'p', CPTAFloat(PTAFloat(rot_vals[1])))
+            group.set_table(b'r', CPTAFloat(PTAFloat(rot_vals[2])))
 
+            group.set_table(b'i', CPTAFloat(PTAFloat(scale_vals[0])))
+            group.set_table(b'j', CPTAFloat(PTAFloat(scale_vals[1])))
+            group.set_table(b'k', CPTAFloat(PTAFloat(scale_vals[2])))
 
             for childid in bone.get('children', []):
                 create_anim_channel(group, childid)
