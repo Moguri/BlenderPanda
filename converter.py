@@ -40,12 +40,13 @@ class Converter():
         for camid, gltf_cam in enumerate(gltf_data.get('cameras', [])):
             self.load_camera(camid, gltf_cam)
 
-        if 'extensions' in gltf_data and 'KHR_materials_common' in gltf_data['extensions']:
-            for lightid, gltf_light in enumerate(gltf_data['extensions']['KHR_materials_common'].get('lights', [])):
+        if 'extensions' in gltf_data and 'KHR_lights' in gltf_data['extensions']:
+            for lightid, gltf_light in enumerate(gltf_data['extensions']['KHR_lights'].get('lights', [])):
                 self.load_light(lightid, gltf_light)
 
         for texid, gltf_tex in enumerate(gltf_data.get('textures', [])):
             self.load_texture(texid, gltf_tex, gltf_data)
+        self.load_fallback_texture()
 
         for matid, gltf_mat in enumerate(gltf_data.get('materials', [])):
             self.load_material(matid, gltf_mat)
@@ -246,6 +247,19 @@ class Converter():
         quat = LQuaternion(quaternion[3], quaternion[0], quaternion[1], quaternion[2])
         return quat.get_hpr()
 
+    def make_texture_srgb(self, texture):
+        if texture.get_num_components() == 3:
+            texture.set_format(Texture.F_srgb)
+        elif texture.get_num_components() == 4:
+            texture.set_format(Texture.F_srgb_alpha)
+
+    def load_fallback_texture(self):
+        texture = Texture('pbr-fallback')
+        texture.setup_2d_texture(1, 1, Texture.T_unsigned_byte, Texture.F_rgba)
+        texture.set_clear_color(LColor(1, 1, 1, 1))
+
+        self.textures['__bp-pbr-fallback'] = texture
+
     def load_texture(self, texid, gltf_tex, gltf_data):
         if 'source' not in gltf_tex:
             print("Texture '{}' has no source, skipping".format(gltf_tex['name']))
@@ -261,10 +275,7 @@ class Converter():
             use_srgb = True
 
         if use_srgb:
-            if texture.get_num_components() == 3:
-                texture.set_format(Texture.F_srgb)
-            elif texture.get_num_components() == 4:
-                texture.set_format(Texture.F_srgb_alpha)
+            self.make_texture_srgb(texture)
         self.textures[texid] = texture
 
     def load_material(self, matid, gltf_mat):
@@ -274,32 +285,53 @@ class Converter():
             self.mat_mesh_map[matid] = []
 
         pmat = Material(gltf_mat['name'])
+        pbr_fallback = {'index': '__bp-pbr-fallback', 'texcoord': 0}
         textures = []
 
-        if 'extensions' in gltf_mat and 'KHR_materials_common' in gltf_mat['extensions']:
-            matext = gltf_mat['extensions']['KHR_materials_common']['values']
-            pmat.set_shininess(matext['shininess'])
+        if 'pbrMetallicRoughness' in gltf_mat:
+            pbrsettings = gltf_mat['pbrMetallicRoughness']
 
-            if isinstance(matext['diffuse'], list):
-                diffuse = LColor(*matext['diffuse'])
-                pmat.set_diffuse(diffuse)
+            pmat.set_base_color(LColor(*pbrsettings.get('baseColorFactor', [1.0, 1.0, 1.0, 1.0])))
+            textures.append(pbrsettings.get('baseColorTexture', pbr_fallback)['index'])
+            if textures[-1] in self.textures:
+                self.make_texture_srgb(self.textures[textures[-1]])
+
+            pmat.set_metallic(pbrsettings.get('metallicFactor', 1.0))
+            textures.append(pbrsettings.get('metallicTexture', pbr_fallback)['index'])
+
+            pmat.set_roughness(pbrsettings.get('roughnessFactor', 1.0))
+            textures.append(pbrsettings.get('roughnessTexture', pbr_fallback)['index'])
+
+        if 'extensions' in gltf_mat and 'BP_materials_legacy' in gltf_mat['extensions']:
+            matsettings = gltf_mat['extensions']['BP_materials_legacy']['bpLegacy']
+            pmat.set_shininess(matsettings['shininessFactor'])
+            pmat.set_ambient(LColor(*matsettings['ambientFactor']))
+
+            if 'diffuseTexture' in matsettings:
+                texture = matsettings['diffuseTexture']
+                textures.append(texture)
+                if matsettings['diffuseTextureSrgb'] and texture in self.textures:
+                    self.make_texture_srgb(self.textures[texture])
             else:
-                textures.append(matext['diffuse'])
+                pmat.set_diffuse(LColor(*matsettings['diffuseFactor']))
 
-            if isinstance(matext['specular'], list):
-                specular = LColor(*matext['specular'])
-                pmat.set_specular(specular)
+            if 'emissionTexture' in matsettings:
+                texture = matsettings['emissionTexture']
+                textures.append(texture)
+                if matsettings['emissionTextureSrgb'] and texture in self.textures:
+                    self.make_texture_srgb(self.textures[texture])
             else:
-                textures.append(matext['specular'])
+                pmat.set_emission(LColor(*matsettings['emissionFactor']))
 
-            if isinstance(matext['emission'], list):
-                emission = LColor(*matext['emission'])
-                pmat.set_emission(emission)
+            if 'specularTexture' in matsettings:
+                texture = matsettings['specularTexture']
+                textures.append(texture)
+                if matsettings['specularTextureSrgb'] and texture in self.textures:
+                    self.make_texture_srgb(self.textures[texture])
             else:
-                textures.append(matext['emission'])
+                pmat.set_specular(LColor(*matsettings['specularFactor']))
+        pmat.set_twoside(gltf_mat.get('doubleSided', False))
 
-            ambient = LColor(*matext['ambient'])
-            pmat.set_ambient(ambient)
 
         state = state.set_attrib(MaterialAttrib.make(pmat))
 

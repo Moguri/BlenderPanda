@@ -10,13 +10,15 @@ from .import blendergltf
 
 from . import pman
 
+from .ext_materials_legacy import ExtMaterialsLegacy
+
 
 _AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
 GLTF_SETTINGS = {
     'asset_profile': 'DESKTOP',
     'nodes_global_matrix_apply': False,
     'extension_exporters': [
-        _AVAILABLE_EXTENSIONS.khr_materials_common.KhrMaterialsCommon(),
+        ExtMaterialsLegacy(),
         _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),
     ],
 }
