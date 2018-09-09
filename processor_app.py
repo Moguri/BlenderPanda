@@ -1,3 +1,4 @@
+import os
 import json
 import socket
 import struct
@@ -16,7 +17,8 @@ import panda3d.core as p3d
 
 import pman
 
-from converter import Converter
+sys.path.append(os.path.join(os.path.dirname(__file__), 'panda3dgltf'))
+from gltf.converter import Converter
 
 
 p3d.load_prc_file_data(

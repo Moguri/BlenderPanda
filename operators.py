@@ -3,7 +3,7 @@ import os
 import subprocess
 
 import bpy
-from bpy_extras.io_utils import ExportHelper
+from bpy_extras.io_utils import ExportHelper, axis_conversion
 
 from .brte.brte import engine
 from .import blendergltf
@@ -16,9 +16,12 @@ from .ext_materials_legacy import ExtMaterialsLegacy
 _AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
 GLTF_SETTINGS = {
     'asset_profile': 'DESKTOP',
-    'nodes_global_matrix_apply': False,
+    'nodes_global_matrix': axis_conversion(
+        to_forward='Z',
+        to_up='Y'
+    ).to_4x4(),
     'extension_exporters': [
-        ExtMaterialsLegacy(),
+        _AVAILABLE_EXTENSIONS.khr_lights.KhrLights(),
         _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),
     ],
 }
@@ -70,6 +73,12 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         gltf_settings['gltf_output_dir'] = os.path.dirname(self.filepath)
         gltf_settings['images_data_storage'] = 'COPY' if self.copy_images else 'REFERENCE'
         gltf_settings['nodes_export_hidden'] = True
+        use_legacy_mats = (
+            config is None or
+            config['general']['material_mode'] == 'legacy'
+        )
+        if use_legacy_mats:
+            gltf_settings['extension_exporters'].append(ExtMaterialsLegacy())
 
         collections_list = engine.DEFAULT_WATCHLIST + ['actions']
         scene_delta = {
@@ -93,15 +102,21 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         with open(gltf_fname, 'w') as f:
             json.dump(data, f, indent=4)
 
+        converter_path =os.path.join(
+            os.path.dirname(__file__),
+            'panda3dgltf',
+            'gltf',
+            'converter.py'
+        )
         args = [
             pycmd,
-            os.path.join(os.path.dirname(__file__), 'converter.py'),
+            converter_path,
             gltf_fname,
             self.filepath,
         ]
 
         subprocess.call(args, env=os.environ.copy())
-        #os.remove(gltf_fname)
+        os.remove(gltf_fname)
         return {'FINISHED'}
 
 
