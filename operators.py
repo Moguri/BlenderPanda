@@ -11,18 +11,16 @@ from .import blendergltf
 from . import pman
 
 from .ext_materials_legacy import ExtMaterialsLegacy
+from .ext_zup import ExtZup
 
 
 _AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
 GLTF_SETTINGS = {
     'asset_profile': 'DESKTOP',
-    'nodes_global_matrix': axis_conversion(
-        to_forward='Z',
-        to_up='Y'
-    ).to_4x4(),
     'extension_exporters': [
         _AVAILABLE_EXTENSIONS.khr_lights.KhrLights(),
         _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),
+        ExtZup(),
     ],
 }
 
