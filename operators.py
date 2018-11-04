@@ -3,7 +3,7 @@ import os
 import subprocess
 
 import bpy
-from bpy_extras.io_utils import ExportHelper, axis_conversion
+from bpy_extras.io_utils import ExportHelper
 
 from .brte.brte import engine
 from .import blendergltf
@@ -100,7 +100,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         with open(gltf_fname, 'w') as f:
             json.dump(data, f, indent=4)
 
-        converter_path =os.path.join(
+        converter_path = os.path.join(
             os.path.dirname(__file__),
             'panda3dgltf',
             'gltf',

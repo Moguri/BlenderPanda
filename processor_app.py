@@ -18,7 +18,7 @@ import panda3d.core as p3d
 import pman
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'panda3dgltf'))
-from gltf.converter import Converter
+from gltf.converter import Converter # pylint: disable=wrong-import-position
 
 
 p3d.load_prc_file_data(
@@ -181,10 +181,10 @@ class App(ShowBase):
             # Keep bg color working even if DisplayRegions get switched around
             # (e.g., from FilterManager)
             for win in self.graphicsEngine.windows:
-                for dr in win.display_regions:
-                    if dr.get_camera() == self.cam:
-                        dr.set_clear_color_active(True)
-                        dr.set_clear_color(self.bg_color)
+                for dispregion in win.display_regions:
+                    if dispregion.get_camera() == self.cam:
+                        dispregion.set_clear_color_active(True)
+                        dispregion.set_clear_color(self.bg_color)
             return task.cont
         self.taskMgr.add(set_bg_clear_color, 'Set BG Clear Color')
 
