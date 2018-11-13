@@ -1,3 +1,4 @@
+import os
 import json
 import socket
 import struct
@@ -16,7 +17,8 @@ import panda3d.core as p3d
 
 import pman
 
-from converter import Converter
+sys.path.append(os.path.join(os.path.dirname(__file__), 'panda3dgltf'))
+from gltf.converter import Converter # pylint: disable=wrong-import-position
 
 
 p3d.load_prc_file_data(
@@ -159,7 +161,6 @@ class App(ShowBase):
                 self.converter.update(data)
                 bg_color = self.converter.background_color
                 self.bg_color = p3d.LVector4(bg_color[0], bg_color[1], bg_color[2], 1)
-                self.view_region.set_clear_color(self.bg_color)
                 self.converter.active_scene.reparent_to(self.render)
                 #self.render.ls()
 
@@ -175,6 +176,17 @@ class App(ShowBase):
             return task.cont
 
         self.taskMgr.add(conversion, 'Conversion')
+
+        def set_bg_clear_color(task):
+            # Keep bg color working even if DisplayRegions get switched around
+            # (e.g., from FilterManager)
+            for win in self.graphicsEngine.windows:
+                for dispregion in win.display_regions:
+                    if dispregion.get_camera() == self.cam:
+                        dispregion.set_clear_color_active(True)
+                        dispregion.set_clear_color(self.bg_color)
+            return task.cont
+        self.taskMgr.add(set_bg_clear_color, 'Set BG Clear Color')
 
         # Setup communication with Blender
         self.server = Server(self.handle_data, self.get_img)

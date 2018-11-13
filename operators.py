@@ -10,17 +10,17 @@ from .import blendergltf
 
 from . import pman
 
+from .ext_materials_legacy import ExtMaterialsLegacy
+from .ext_zup import ExtZup
+
 
 _AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
 GLTF_SETTINGS = {
-    'nodes_export_hidden': True,
-    'images_allow_srgb': True,
     'asset_profile': 'DESKTOP',
-    'asset_version': '1.0',
-    'nodes_global_matrix_apply': False,
     'extension_exporters': [
-        _AVAILABLE_EXTENSIONS.khr_materials_common.KhrMaterialsCommon(),
+        _AVAILABLE_EXTENSIONS.khr_lights.KhrLights(),
         _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),
+        ExtZup(),
     ],
 }
 
@@ -70,6 +70,13 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         gltf_settings = GLTF_SETTINGS.copy()
         gltf_settings['gltf_output_dir'] = os.path.dirname(self.filepath)
         gltf_settings['images_data_storage'] = 'COPY' if self.copy_images else 'REFERENCE'
+        gltf_settings['nodes_export_hidden'] = True
+        use_legacy_mats = (
+            config is None or
+            config['general']['material_mode'] == 'legacy'
+        )
+        if use_legacy_mats:
+            gltf_settings['extension_exporters'].append(ExtMaterialsLegacy())
 
         collections_list = engine.DEFAULT_WATCHLIST + ['actions']
         scene_delta = {
@@ -91,11 +98,17 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         # Now convert the data to bam
         gltf_fname = self.filepath + '.gltf'
         with open(gltf_fname, 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4)
 
+        converter_path = os.path.join(
+            os.path.dirname(__file__),
+            'panda3dgltf',
+            'gltf',
+            'converter.py'
+        )
         args = [
             pycmd,
-            os.path.join(os.path.dirname(__file__), 'converter.py'),
+            converter_path,
             gltf_fname,
             self.filepath,
         ]

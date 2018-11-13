@@ -2,6 +2,7 @@ import os
 
 import bpy
 
+from .blendergltf.pbr_utils import PbrSettings
 from . import pman
 from . import operators
 
@@ -251,8 +252,14 @@ def register():
     for panel in get_panels():
         panel.COMPAT_ENGINES.add('PANDA')
 
+    if not hasattr(bpy.types.Material, 'pbr_export_settings'):
+        bpy.types.Material.pbr_export_settings = bpy.props.PointerProperty(type=PbrSettings)
+
 
 def unregister():
     for panel in get_panels():
         if 'PANDA' in panel.COMPAT_ENGINES:
             panel.COMPAT_ENGINES.remove('PANDA')
+
+    if hasattr(bpy.types.Material, 'pbr_export_settings'):
+        del bpy.types.Material.pbr_export_settings

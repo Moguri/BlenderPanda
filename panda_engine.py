@@ -7,6 +7,7 @@ from .brte.brte.processors import ExternalProcessor
 from .brte.brte.converters import BTFConverter
 from . import pman
 from . import operators
+from .ext_materials_legacy import ExtMaterialsLegacy
 
 
 class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
@@ -26,6 +27,12 @@ class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
         gltf_settings['images_data_storage'] = 'REFERENCE'
         gltf_settings['meshes_apply_modifiers'] = False # Cannot be done in a thread
         gltf_settings['hacks_streaming'] = True
+        use_legacy_mats = (
+            config is None or
+            config['general']['material_mode'] == 'legacy'
+        )
+        if use_legacy_mats:
+            gltf_settings['extension_exporters'].append(ExtMaterialsLegacy())
 
         super().__init__(
             converter=BTFConverter(gltf_settings),

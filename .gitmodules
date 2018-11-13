@@ -7,3 +7,6 @@
 [submodule "pman"]
 	path = pman
 	url = https://github.com/Moguri/pman.git
+[submodule "panda3dgltf"]
+	path = panda3dgltf
+	url = https://github.com/Moguri/panda3d-gltf.git
