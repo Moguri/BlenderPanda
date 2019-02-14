@@ -1,4 +1,4 @@
-.PHONEY: lint, lint_templates, todos
+.PHONEY: lint, todos, update_submodules, zip
 
 # TODO build this from bl_info['version']
 ver_str := v0.3.0
@@ -9,5 +9,8 @@ lint:
 todos:
 	pylint -d all -e fixme *.py
 
-zip:
+update_submodules:
+	git submodule update --init --recursive
+
+zip: update_submodules
 	git-archive-all --force-submodules --prefix BlenderPanda BlenderPanda-$(ver_str).zip
