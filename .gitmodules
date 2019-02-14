@@ -1,9 +1,6 @@
-[submodule "blendergltf"]
-	path = blendergltf
-	url = https://github.com/Kupoman/blendergltf.git
 [submodule "pman"]
 	path = pman
 	url = https://github.com/Moguri/pman.git
-[submodule "panda3dgltf"]
-	path = panda3dgltf
-	url = https://github.com/Moguri/panda3d-gltf.git
+[submodule "panda3d-blend2bam"]
+	path = panda3d-blend2bam
+	url = https://github.com/Moguri/panda3d-blend2bam.git

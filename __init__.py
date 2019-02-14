@@ -17,6 +17,7 @@ if "bpy" in locals():
     unregister()
     #pylint: disable=used-before-assignment
     imp.reload(pman)
+    imp.reload(blend2bam)
     imp.reload(panda_engine)
     imp.reload(ui)
     imp.reload(operators)
@@ -26,8 +27,14 @@ else:
     import sys
     import os
     # Add this folder to the path to find PyOpenGL
-    sys.path.append(os.path.dirname(__file__))
-    from . import pman
+    FILEDIR = os.path.dirname(__file__)
+    sys.path.append(FILEDIR)
+    # ... and pman
+    sys.path.append(os.path.join(FILEDIR, 'pman'))
+    import pman
+    # .. and blend2bam
+    sys.path.append(os.path.join(FILEDIR, 'panda3d-blend2bam'))
+    import blend2bam
     from . import panda_engine
     from . import ui
     from . import operators

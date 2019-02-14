@@ -2,7 +2,7 @@ import os
 
 import bpy
 
-from .blendergltf.pbr_utils import PbrSettings
+from .pbr_utils import PbrSettings
 from . import pman
 from . import operators
 

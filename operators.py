@@ -1,27 +1,12 @@
 import json
 import os
 import subprocess
+import sys
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
-from .import blendergltf
-
-from . import pman
-
-from .ext_materials_legacy import ExtMaterialsLegacy
-from .ext_zup import ExtZup
-
-
-_AVAILABLE_EXTENSIONS = blendergltf.extension_exporters
-GLTF_SETTINGS = {
-    'asset_profile': 'DESKTOP',
-    'extension_exporters': [
-        _AVAILABLE_EXTENSIONS.khr_lights.KhrLights(),
-        _AVAILABLE_EXTENSIONS.blender_physics.BlenderPhysics(),
-        ExtZup(),
-    ],
-}
+import pman
 
 
 def update_blender_path():
@@ -39,9 +24,9 @@ class ExportBam(bpy.types.Operator, ExportHelper):
     bl_idname = 'panda_engine.export_bam'
     bl_label = 'Export BAM'
 
-    copy_images = bpy.props.BoolProperty(
-        default=True,
-    )
+    # copy_images = bpy.props.BoolProperty(
+    #     default=True,
+    # )
 
     skip_up_to_date = bpy.props.BoolProperty(
         default=False,
@@ -55,10 +40,15 @@ class ExportBam(bpy.types.Operator, ExportHelper):
     )
 
     def execute(self, _context):
+        filedir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else os.getcwd()
         try:
-            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
+            config = pman.get_config(filedir)
         except pman.NoConfigError as err:
             config = None
+        if config:
+            user_config = pman.get_user_config(config)
+        else:
+            user_config = None
 
         try:
             pycmd = pman.get_python_program(config)
@@ -66,37 +56,10 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             self.report({'ERROR'}, str(err))
             return {'CANCELLED'}
 
-        gltf_settings = GLTF_SETTINGS.copy()
-        gltf_settings['gltf_output_dir'] = os.path.dirname(self.filepath)
-        gltf_settings['images_data_storage'] = 'COPY' if self.copy_images else 'REFERENCE'
-        gltf_settings['nodes_export_hidden'] = True
         use_legacy_mats = (
             config is None or
             config['general']['material_mode'] == 'legacy'
         )
-        if use_legacy_mats:
-            gltf_settings['extension_exporters'].append(ExtMaterialsLegacy())
-
-        collections_list = [
-            "actions",
-            #"armatures",
-            "cameras",
-            "images",
-            "lamps",
-            "materials",
-            "meshes",
-            "objects",
-            "scenes",
-            #"sounds",
-            #"speakers",
-            "textures",
-            #"worlds",
-        ]
-        scene_delta = {
-            cname: list(getattr(bpy.data, cname))
-            for cname in collections_list
-        }
-        data = blendergltf.export_gltf(scene_delta, gltf_settings)
 
         # Check if we need to convert the file
         try:
@@ -107,28 +70,45 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             # The file doesn't exist, so we cannot skip conversion
             pass
 
+        # Create a temporary blend file to convert
+        tmpfname = os.path.join(filedir, '__bp_temp__.blend')
+        bpy.ops.wm.save_as_mainfile(filepath=tmpfname, copy=True)
 
         # Now convert the data to bam
-        gltf_fname = self.filepath + '.gltf'
-        with open(gltf_fname, 'w') as f:
-            json.dump(data, f, indent=4)
-
-        converter_path = os.path.join(
-            os.path.dirname(__file__),
-            'panda3dgltf',
-            'gltf',
-            'converter.py'
-        )
-        args = [
-            pycmd,
-            converter_path,
-            gltf_fname,
-            self.filepath,
+        blend2bam_args = [
+            '--blender-dir', os.path.dirname(bpy.app.binary_path)
+        ]
+        if config:
+            blend2bam_args += [
+                '--material-mode', config['general']['material_mode']
+            ]
+        blend2bam_args += [
+            tmpfname,
+            self.filepath
         ]
 
-        subprocess.call(args, env=os.environ.copy())
-        os.remove(gltf_fname)
-        return {'FINISHED'}
+        retval = {'FINISHED'}
+        try:
+            if user_config is not None and user_config['python']['in_venv']:
+                # Use blend2bam from venv
+                pman.run_program(config, ['blend2bam'] + blend2bam_args)
+            else:
+                # Use bundled blend2bam
+                scriptloc = os.path.join(
+                    os.path.dirname(__file__),
+                    'blend2bam_wrapper.py'
+                )
+                args = [
+                    pycmd,
+                    scriptloc
+                ] + blend2bam_args
+                if subprocess.call(args) != 0:
+                    reval = {'CANCELLED'}
+        finally:
+            # Remove the temporary blend file
+            os.remove(tmpfname)
+
+        return retval
 
 
 class CreateProject(bpy.types.Operator):
