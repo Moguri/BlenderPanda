@@ -1,45 +1,37 @@
-import os
+import sys
 
 
 import bpy
-from .brte.brte import engine
-from .brte.brte.processors import ExternalProcessor
-from .brte.brte.converters import BTFConverter
-from . import pman
-from . import operators
-from .ext_materials_legacy import ExtMaterialsLegacy
 
 
-class PandaEngine(bpy.types.RenderEngine, engine.RealTimeEngine):
+class PandaEngine(bpy.types.RenderEngine):
     bl_idname = 'PANDA'
     bl_label = 'Panda 3D'
-
-    def __init__(self):
-        try:
-            config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
-        except pman.NoConfigError as _err:
-            config = None
-        pycmd = pman.get_python_program(config)
-        path = os.path.join(os.path.dirname(__file__), 'processor_app.py')
-        args = [pycmd, path, os.path.dirname(bpy.data.filepath)]
-
-        gltf_settings = operators.GLTF_SETTINGS.copy()
-        gltf_settings['images_data_storage'] = 'REFERENCE'
-        gltf_settings['meshes_apply_modifiers'] = False # Cannot be done in a thread
-        gltf_settings['hacks_streaming'] = True
-        use_legacy_mats = (
-            config is None or
-            config['general']['material_mode'] == 'legacy'
-        )
-        if use_legacy_mats:
-            gltf_settings['extension_exporters'].append(ExtMaterialsLegacy())
-
-        super().__init__(
-            converter=BTFConverter(gltf_settings),
-            processor=ExternalProcessor(args),
-            use_bgr_texture=True
-        )
 
     @classmethod
     def launch_game(cls):
         bpy.ops.panda_engine.run_project()
+
+    @classmethod
+    def register(cls):
+        render_engine_class = cls
+        class LaunchGame(bpy.types.Operator):
+            '''Launch the game in a separate window'''
+            bl_idname = '{}.launch_game'.format(cls.bl_idname.lower())
+            bl_label = 'Launch Game'
+
+            @classmethod
+            def poll(cls, context):
+                return context.scene.render.engine == render_engine_class.bl_idname
+
+            def execute(self, _context):
+                try:
+                    cls.launch_game()
+                except Exception: #pylint:disable=broad-except
+                    self.report({'ERROR'}, str(sys.exc_info()[1]))
+                return {'FINISHED'}
+
+        bpy.utils.register_class(LaunchGame)
+        if not bpy.app.background:
+            keymap = bpy.context.window_manager.keyconfigs.default.keymaps['Screen']
+            keymap.keymap_items.new(LaunchGame.bl_idname, 'P', 'PRESS')

@@ -5,7 +5,6 @@ import subprocess
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
-from .brte.brte import engine
 from .import blendergltf
 
 from . import pman
@@ -78,7 +77,21 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         if use_legacy_mats:
             gltf_settings['extension_exporters'].append(ExtMaterialsLegacy())
 
-        collections_list = engine.DEFAULT_WATCHLIST + ['actions']
+        collections_list = [
+            "actions",
+            #"armatures",
+            "cameras",
+            "images",
+            "lamps",
+            "materials",
+            "meshes",
+            "objects",
+            "scenes",
+            #"sounds",
+            #"speakers",
+            "textures",
+            #"worlds",
+        ]
         scene_delta = {
             cname: list(getattr(bpy.data, cname))
             for cname in collections_list
