@@ -6,3 +6,15 @@ python:
   - '3.6'
   - '3.7'
 script: make lint
+before_deploy: make zip
+deploy:
+  provider: releases
+  api_key:
+    secure: sPvHZl2TMa+SNaST2F1892257fS6KQVbOI81AUU6HM4PEiyXZ+QIqC2xHPQZQY305zZ4TGfN3FEbLkuCKp4aqf9wLuAm6zlAOQg+a29P0IpTWVDxXm4E7j5WJRs6Jp1W5N7FWJ7KY1uCfFf5RHPCZ002kw6b502fZaQTWIY1QV2m27X24YrKA7fcPjrP4z6w8ThyljmNwXAn7SJLW2De8EK0IyaFxC7Zs/UrRGKLMNZqYVvdNFGGNXAPxvLUeLtxPyf1G2FuN/uB96o2DpfE8I1IyK8s8aQvoPBQ2+hh5XSoACa6iHV65h9YqG2D2tQvvaFhXgVjFsy8wGIzrHbuTa1aLJexc7vtNewUjXpczPAxXyqrN6JNR+epoAIlyp3YmrfTDTHp+ae9MObqQG+69sU/TnWfuFhZZGfhJzN2IFJVSl8Ftr6+OnAjX+rsmonZvsOW74dcadPOyHMsExv4xAY+DVyOlYxTXMYm6CZ4Jvyx3fWoQRf1Vr7tZJCSG/1DzGOPpkusQIrcvncco8AnAPnLZE16gCmDa5LToLAWsSKt4owi5K71+NQmnfUFv8Rb13T2Q1CuGoulA8o6yUqa6GUICjGOooxFvaH5OboieZcbQaVrMfeeZtHSBjKCaD86na9WYXwJ5m1doova9Ez+PXFVrihtQxqJABCf0xyq1Og=
+  file: BlenderPanda*.zip
+  file_glob: true
+  skip_cleanup: true
+  on:
+    repo: Moguri/BlenderPanda
+    tags: true
+    python: '3.7'
