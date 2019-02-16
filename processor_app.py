@@ -43,11 +43,10 @@ class BlenderConnection:
             while self.running:
                 if self.connection.poll():
                     update = self.connection.recv()
-                    # if update['type'] == 'scene':
-                    #     print('update {} transfer took {:.2f}ms'.format(
-                    #         update['type'],
-                    #         (time.time_ns() - update['timestamp']) / 1000000
-                    #     ))
+                    # print('update {} transfer took {:.2f}ms'.format(
+                    #     update['type'],
+                    #     (time.perf_counter() - update['timestamp']) * 1000
+                    # ))
                     self.update_queue.put(update)
 
                 image = None
@@ -64,7 +63,7 @@ class BlenderConnection:
     def send_image(self, xsize, ysize, imagebytes):
         self.image_queue.put({
             'type': 'image',
-            'timestamp': time.time_ns(),
+            'timestamp': time.perf_counter(),
             'x': xsize,
             'y': ysize,
             'bytes': bytes(imagebytes),

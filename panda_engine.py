@@ -74,7 +74,7 @@ class ExternalConnection:
     def _send_update(self, update_type, data):
         self.update_queue.put({
             'type': update_type,
-            'timestamp': time.time_ns(),
+            'timestamp': time.perf_counter(),
             **data,
         })
 
