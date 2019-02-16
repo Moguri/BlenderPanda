@@ -13,6 +13,3 @@ Blender addon for integrating [Panda3D](http://www.panda3d.org/)
 
 ## Getting Started
 Documentation for getting started with BlenderPanda can be found [here](https://blenderpanda.readthedocs.org/en/latest/getting_started.html).
-
-## Roadmap
-The roadmap can be found on [Trello](https://trello.com/b/P7jBDDsS/roadmap).
