@@ -25,8 +25,8 @@ class BlenderConnection:
         self.connection = multiprocessing.connection.Client(conn_addr)
         print('connected to', conn_addr)
 
-        self.update_queue = queue.SimpleQueue()
-        self.image_queue = queue.SimpleQueue()
+        self.update_queue = queue.Queue()
+        self.image_queue = queue.Queue()
         self.running = True
         self._conn_thread = threading.Thread(target=self._handle_connection)
         self._conn_thread.start()

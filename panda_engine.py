@@ -28,8 +28,7 @@ class ExternalConnection:
 
         self.tag_cb = None
 
-        self.update_queue = queue.SimpleQueue()
-        self.image_queue = queue.SimpleQueue()
+        self.update_queue = queue.Queue()
 
         if user_config is not None and use_venv and user_config['python']['in_venv']:
             pyprog = 'python'
