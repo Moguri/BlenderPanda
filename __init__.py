@@ -1,7 +1,7 @@
 bl_info = { # pylint: disable=invalid-name
     "name": "Panda3D Integration",
     "author": "Mitchell Stokes",
-    "version": (0, 3, 0),
+    "version": (0, 4, 0),
     "blender": (2, 79, 0),
     "location": "Info header, render engine menu",
     "description": "Run Panda3D from inside Blender",
