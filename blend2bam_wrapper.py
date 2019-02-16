@@ -5,5 +5,5 @@ sys.path.append(os.path.join(
     'panda3d-blend2bam',
 ))
 
-from blend2bam.cli import main
+from blend2bam.cli import main #pylint:disable=no-name-in-module,wrong-import-position
 sys.exit(main())

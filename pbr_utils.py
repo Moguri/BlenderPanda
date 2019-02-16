@@ -185,7 +185,7 @@ def set_texture(self, value, current_value, update_func):
     update_func(slot)
     if slot_index < current_index:
         material.active_texture_index = slot_index
-        for _ in range(current_index - slot_index):
+        for _ in range(current_index - slot_index): #pylint:disable=invalid-name
             bpy.ops.texture.slot_move(type='DOWN')
             material.active_texture_index -= 1
 

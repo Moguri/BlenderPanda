@@ -10,7 +10,7 @@ from direct.showbase.ShowBase import ShowBase
 import panda3d.core as p3d
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'pman'))
-import pman
+import pman #pylint:disable=wrong-import-position
 
 
 p3d.load_prc_file_data(
@@ -58,8 +58,7 @@ class BlenderConnection:
                 if image is not None:
                     self.connection.send(image)
                 # print('collapsed {} images'.format(num_images))
-        except (EOFError, OSError) as exc:
-            # print('Connection to Blender died: {}'.format(exc))
+        except (EOFError, OSError):
             self.shutdown()
 
     def send_image(self, xsize, ysize, imagebytes):
@@ -250,7 +249,7 @@ class App(ShowBase):
         self.view_lens.set_view_mat(viewmat)
 
     def update_scene(self, bampath):
-        stime = time.perf_counter()
+        #stime = time.perf_counter()
         new_scene = self.loader.load_model(bampath, noCache=True)
         # print('update took {:.2f}s'.format(
         #     (time.perf_counter() - stime)

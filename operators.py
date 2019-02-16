@@ -1,7 +1,5 @@
-import json
 import os
 import subprocess
-import sys
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
@@ -60,6 +58,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
             config is None or
             config['general']['material_mode'] == 'legacy'
         )
+        material_mode = 'legacy' if use_legacy_mats else 'pbr'
 
         # Check if we need to convert the file
         try:
@@ -76,12 +75,9 @@ class ExportBam(bpy.types.Operator, ExportHelper):
 
         # Now convert the data to bam
         blend2bam_args = [
-            '--blender-dir', os.path.dirname(bpy.app.binary_path)
+            '--blender-dir', os.path.dirname(bpy.app.binary_path),
+            '--material-mode', material_mode,
         ]
-        if config:
-            blend2bam_args += [
-                '--material-mode', config['general']['material_mode']
-            ]
         blend2bam_args += [
             tmpfname,
             self.filepath
@@ -103,7 +99,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
                     scriptloc
                 ] + blend2bam_args
                 if subprocess.call(args) != 0:
-                    reval = {'CANCELLED'}
+                    retval = {'CANCELLED'}
         finally:
             # Remove the temporary blend file
             os.remove(tmpfname)

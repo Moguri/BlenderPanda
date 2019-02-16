@@ -22,7 +22,7 @@ class ExternalConnection:
         try:
             config = pman.get_config(filedir)
             user_config = pman.get_user_config(config['internal']['projectdir'])
-        except pman.NoConfigError as err:
+        except pman.NoConfigError:
             config = None
             user_config = None
 
@@ -204,7 +204,7 @@ class PandaEngine(bpy.types.RenderEngine):
         extern_conn = self._get_extern_conn()
         filedir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else os.getcwd()
         tmpfname = os.path.join(filedir, '__bp_temp__.bam')
-        stime = time.perf_counter()
+        # stime = time.perf_counter()
         bpy.ops.panda_engine.export_bam(filepath=tmpfname)
         # print('conversion took {:.2f}s'.format(
         #     (time.perf_counter() - stime)
