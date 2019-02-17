@@ -26,7 +26,7 @@ else:
     import bpy
     import sys
     import os
-    # Add this folder to the path to find PyOpenGL
+    # Add this folder to the path to find PyOpenGL and pkg_resources
     FILEDIR = os.path.dirname(__file__)
     sys.path.append(FILEDIR)
     # ... and pman
