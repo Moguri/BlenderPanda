@@ -249,6 +249,7 @@ class App(ShowBase):
 
     def update_scene(self, bampath):
         #stime = time.perf_counter()
+        bampath = p3d.Filename.from_os_specific(bampath)
         new_scene = self.loader.load_model(bampath, noCache=True)
         # print('update took {:.2f}s'.format(
         #     (time.perf_counter() - stime)

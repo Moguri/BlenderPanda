@@ -208,7 +208,9 @@ class PandaEngine(bpy.types.RenderEngine):
         if bpy.data.filepath:
             tmpfname = os.path.join(os.path.dirname(bpy.data.filepath), '__bp_temp__.bam')
         else:
-            tmpfname = tempfile.NamedTemporaryFile(suffix='.bam', delete=False).name
+            tmpfile = tempfile.NamedTemporaryFile(suffix='.bam', delete=False)
+            tmpfile.close()
+            tmpfname = tmpfile.name
         # stime = time.perf_counter()
         bpy.ops.panda_engine.export_bam(filepath=tmpfname)
         # print('conversion took {:.2f}s'.format(
