@@ -38,7 +38,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
     )
 
     def execute(self, _context):
-        filedir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else os.getcwd()
+        filedir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else os.path.dirname(self.filepath)
         try:
             config = pman.get_config(filedir)
         except pman.NoConfigError as err:
