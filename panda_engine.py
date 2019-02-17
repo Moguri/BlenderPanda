@@ -26,8 +26,8 @@ class ExternalConnection:
             config = None
             user_config = None
 
-        self.tag_cb = None
 
+        self._tmpfnames = set()
         self.update_queue = queue.Queue()
 
         if user_config is not None and use_venv and user_config['python']['in_venv']:
@@ -60,6 +60,8 @@ class ExternalConnection:
         self._running = False
         self.proc.terminate()
         self.timer.join()
+        for tmpfname in self._tmpfnames:
+            os.remove(tmpfname)
         # print("del complete")
 
     def _timer_thread(self):
@@ -85,6 +87,7 @@ class ExternalConnection:
                 self.connection = None
 
     def update_scene(self, filepath):
+        self._tmpfnames.add(filepath)
         self._send_update('scene', {
             'path': filepath,
         })
@@ -146,9 +149,9 @@ class PandaEngine(bpy.types.RenderEngine):
         # print('del render engine')
         ExternalConnection.destroy_ptr()
 
+
     def _get_extern_conn(self):
         extern_conn = ExternalConnection.get_ptr()
-        extern_conn.tag_cb = self.tag_redraw
         return extern_conn
 
     def _draw_texture(self):
