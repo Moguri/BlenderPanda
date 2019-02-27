@@ -8,6 +8,7 @@ class ConfTypes(Enum):
     string = 1
     path = 2
     boolean = 3
+    mat_mode = 4
 
 def get_conf_prop(section, field, conf_type, user_conf=False):
     def f(_self):
@@ -27,6 +28,9 @@ def get_conf_prop(section, field, conf_type, user_conf=False):
             value = bpy.path.relpath(value)
         elif conf_type == ConfTypes.boolean:
             value = config[section][field]
+        elif conf_type == ConfTypes.mat_mode:
+            # Convert from a material mode to boolean
+            value = config[section][field] == 'pbr'
         else:
             raise TypeError("Unexpected conf_type {}".format(conf_type))
 
@@ -49,6 +53,9 @@ def set_conf_prop(section, field, conf_type=ConfTypes.string, user_conf=False):
             # Convert from Blender path to pman path
             value = bpy.path.abspath(value)
             config[section][field] = pman.get_rel_path(project_conf, value)
+        elif conf_type == ConfTypes.mat_mode:
+            # Convert from a boolean to a material mode
+            config[section][field] = 'pbr' if value else 'legacy'
         else:
             config[section][field] = value
         #print("SET CONF", section, field, value)
@@ -88,6 +95,13 @@ class PandaProjectSettings(bpy.types.PropertyGroup):
             description="Entry point name for the renderer to use",
             get=get_conf_prop('general', 'renderer', ConfTypes.string),
             set=set_conf_prop('general', 'renderer', ConfTypes.string),
+        )
+
+        cls.pbr_materials = bpy.props.BoolProperty(
+            name="Enable PBR Materials",
+            description="Convert materials to PBR materials instead of legacy materials",
+            get=get_conf_prop('general', 'material_mode', ConfTypes.mat_mode),
+            set=set_conf_prop('general', 'material_mode', ConfTypes.mat_mode),
         )
 
         cls.asset_dir = bpy.props.StringProperty(
