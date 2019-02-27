@@ -83,12 +83,11 @@ class PandaProjectSettings(bpy.types.PropertyGroup):
             set=set_conf_prop('python', 'path', ConfTypes.path, user_conf=True),
         )
 
-        cls.render_plugin = bpy.props.StringProperty(
-            name="Render Plugin",
-            description="Path to a Python file containing a plugin for rendering",
-            subtype='FILE_PATH',
-            get=get_conf_prop('general', 'render_plugin', ConfTypes.path),
-            set=set_conf_prop('general', 'render_plugin', ConfTypes.path),
+        cls.renderer = bpy.props.StringProperty(
+            name="Renderer",
+            description="Entry point name for the renderer to use",
+            get=get_conf_prop('general', 'renderer', ConfTypes.string),
+            set=set_conf_prop('general', 'renderer', ConfTypes.string),
         )
 
         cls.asset_dir = bpy.props.StringProperty(

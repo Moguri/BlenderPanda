@@ -31,7 +31,7 @@ class ExternalConnection:
         self._tmpfnames = set()
         self.update_queue = queue.Queue()
 
-        if user_config is not None and use_venv and user_config['python']['in_venv']:
+        if user_config is not None and user_config['python']['in_venv']:
             pyprog = 'python'
         else:
             pyprog = pman.get_python_program(config)

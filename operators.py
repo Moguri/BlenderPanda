@@ -44,7 +44,7 @@ class ExportBam(bpy.types.Operator, ExportHelper):
         except pman.NoConfigError as err:
             config = None
         if config:
-            user_config = pman.get_user_config(config)
+            user_config = pman.get_user_config(config['internal']['projectdir'])
         else:
             user_config = None
 
