@@ -126,6 +126,11 @@ class CreateProject(bpy.types.Operator):
 
     def execute(self, _context):
         pman.create_project(self.directory)
+        config = pman.get_config(self.directory)
+        user_config = pman.get_user_config(self.directory)
+
+        from pman import hooks
+        hooks.create_blender(self.directory, config, user_config)
 
         if self.switch_dir:
             os.chdir(self.directory)
@@ -151,7 +156,7 @@ class UpdateProject(bpy.types.Operator):
     def execute(self, _context):
         try:
             config = pman.get_config(os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None)
-            pman.create_project(pman.get_abs_path(config, ''))
+            pman.create_project(config['internal']['projectdir'], ['blender'])
             return {'FINISHED'}
         except pman.PManException as err:
             self.report({'ERROR'}, str(err))
