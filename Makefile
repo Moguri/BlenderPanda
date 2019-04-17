@@ -1,6 +1,5 @@
 .PHONEY: lint, todos, update_submodules, display_version, zip
 
-# TODO build this from bl_info['version']
 ver_str := v$(shell grep -Po '(?<=version": \().*(?=\),)' __init__.py | sed 's/, /./g')
 
 lint:
