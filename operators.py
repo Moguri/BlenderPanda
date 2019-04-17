@@ -8,13 +8,15 @@ import pman
 
 
 def update_blender_path():
-    try:
-        startdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+    startdir = os.path.dirname(bpy.data.filepath) if bpy.data.filepath else None
+    if pman.config_exists(startdir):
         user_config = pman.get_user_config(startdir)
+        if 'blender' not in user_config:
+            user_config['blender'] = {
+                'use_last_path': True
+            }
         user_config['blender']['last_path'] = bpy.app.binary_path
         pman.write_user_config(user_config)
-    except pman.NoConfigError:
-        pass
 
 
 class ExportBam(bpy.types.Operator, ExportHelper):
