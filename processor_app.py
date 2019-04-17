@@ -164,10 +164,12 @@ class App(ShowBase):
     def update_rman(self):
         try:
             pman_conf = pman.get_config(self.workingdir)
+            self.renderer = pman.create_renderer(self, pman_conf)
         except pman.NoConfigError:
-            pman_conf = None
+            from pman import basicrenderer
+            print('No configuration found, falling back to basic renderer')
+            self.renderer = basicrenderer.BasicRenderer(self)
 
-        self.renderer = pman.create_renderer(self, pman_conf)
 
     def make_offscreen(self, sizex, sizey):
         sizex = p3d.Texture.up_to_power_2(sizex)
