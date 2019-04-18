@@ -129,7 +129,7 @@ class CreateProject(bpy.types.Operator):
         config = pman.get_config(self.directory)
         user_config = pman.get_user_config(self.directory)
 
-        from pman import hooks
+        from pman import hooks # pylint:disable=no-name-in-module
         hooks.create_blender(self.directory, config, user_config)
 
         if self.switch_dir:

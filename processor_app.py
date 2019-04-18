@@ -166,7 +166,7 @@ class App(ShowBase):
             pman_conf = pman.get_config(self.workingdir)
             self.renderer = pman.create_renderer(self, pman_conf)
         except pman.NoConfigError:
-            from pman import basicrenderer
+            from pman import basicrenderer # pylint:disable no-name-in-module
             print('No configuration found, falling back to basic renderer')
             self.renderer = basicrenderer.BasicRenderer(self)
 
